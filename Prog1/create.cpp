@@ -7,3 +7,8 @@
 #include <cstdlib>
 
 using namespace std;
+
+main()
+{
+    
+}
