@@ -1,0 +1,347 @@
+Script started on Wed 13 Jan 2021 10:33:49 AM EST
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[?1034h[arnold_se@cobra Lab1]$ cat tail.cpp 
+//Implement Linux command tail -n, where n is the number of lines from the end of a text file to be copied to the screen
+#include<iostream>
+#include<string>
+#include<fstream>
+#include <sstream>
+#include<stack>
+
+using namespace std;
+
+void PrintStack(stack<char> c);
+int StringToInt(string n);
+stack<char> tail(string fileName, int numLinesPrint);
+
+//change ./a.out too tail by "mv ./a.out tail"
+
+int main(int argc, char **argv)
+{
+    if(argc==3)
+    {
+        //num of lines to print from tail of file
+        string n = argv[1];
+        string fileName = argv[2];
+        
+        //convert string to int and tells us how many lines
+        // starting from the botttom to print
+        int numLinesPrint = StringToInt(n);
+        
+        //add the lines from the bottom of text file to a stack
+        stack<char> t = tail(fileName, numLinesPrint);
+       
+        //print stack
+        PrintStack(t);
+        cout<<endl;
+    }
+    else
+        cout<<"Please enter the correct number of arguments"<<endl;
+    
+    return 0;
+}
+
+void PrintStack(stack<char> c)
+{
+    while(!c.empty())
+    {
+        cout<<c.top();
+        c.pop();
+    }
+}
+
+int StringToInt(string n)
+{
+    //removes '-' from string
+    string lines = n.substr(1);
+        
+    //convert string to int using stringstream
+    stringstream s(lines);
+    int numLines = 0;
+    s >> numLines;
+    
+    return numLines;
+}
+
+stack<char> tail(string fileName, int numLinesPrint)
+{
+    //open file for input and output 
+    //(maybe don't need to open it for output)?
+    fstream inOut (fileName.c_str(), ios::in | ios::out);
+
+    //starts at the last char at end of txt file 
+    inOut.seekg(0, ios::end);
+
+    //j starts at 1 because you can't have neg. 0
+    int j = 1;
+    int line = 0;
+    char token;
+    stack <char> c;
+    
+    //outer while loop is keeping track of how many lines to print
+    while(line != numLinesPrint)
+    {
+        //inner while loop adds chars to stack and stops at '\n'
+        while(token != '\n')
+        {
+            inOut.seekg(-j,ios::end);
+            inOut.get(token);
+            c.push(token);
+            j++;
+        }
+        //resets token when it is newline
+        //so it can enter inner while loop
+        if(token == '\n')
+        {
+            token = ' ';
+        }
+        line++;
+    }
+    return c;
+}
+
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ c++ tail.cpp
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ ./myTail -6 sample.txt [1P[1@3[C[C[C[C[C[C[C[C[C[C[C[C
+
+Uttar Pradesh
+Uttarakhand
+West Bengal
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ cat wc.cpp 
+//Implement Linux command wc -c,-l,-w where c is the byte count, -l is the newline count, -w is word count
+#include<iostream>
+#include<string>
+#include<fstream>
+
+using namespace std;
+
+void wc(char **argv, string fileName);
+void arguments(char **argv, string fileName);
+void wordCount(char **argv, string fileName);
+void byteCount(char **argv, string fileName);
+void newLineCounts(char **argv, string fileName);
+
+//change ./a.out too tail by "mv ./a.out wc"
+
+int main(int argc, char **argv)
+{  
+    
+    if(argc==3)
+    {
+        string fileName = argv[2];
+        arguments(argv,fileName);
+    }
+    else if(argc==2)
+    {
+        string filename = argv[1];
+        wc(argv, filename);
+    }
+    else
+    {
+        cout<<"Please enter the correct number of arguments"<<endl;
+    }
+
+    return 0;
+}
+
+void arguments(char **argv, string fileName)
+{
+    string arg = argv[1];
+    //prints byte counts
+    if(arg == "-c")
+        byteCount(argv, fileName);
+    
+    //prints newline counts
+    if(arg == "-l")
+        newLineCounts(argv, fileName);
+    
+    //prints word counts
+    if(arg == "-w")
+        wordCount(argv, fileName);
+}
+
+void wc(char **argv, string fileName)
+{
+    //open file for input and output 
+    //(maybe don't need to open it for output)
+    fstream inOut (fileName.c_str(), ios::in | ios::out);
+    
+    int charCount = 0;
+    //wordCount set to 1 because file could possibly
+    //not include any spaces or new lines
+    int wordCount = 1;
+    //assume newline at the end of file for linux
+    //operating systems
+    int newLineCount = 0;
+    char ch;
+    
+    //set byte offset to beginning of file
+    inOut.seekg(0);
+    
+    while( inOut.get(ch))
+    {
+        charCount++;
+        if( ch == '\n' )
+            newLineCount++;
+        if( ch == ' ' || ch == '\n')
+            wordCount++;
+    }
+    cout<<" "<<newLineCount<<" "<<wordCount<<" "<<charCount<<" "<<fileName<<endl;
+}
+
+void byteCount(char **argv, string fileName)
+{
+    //open file for input and output 
+    //(maybe don't need to open it for output)
+    fstream inOut (fileName.c_str(), ios::in | ios::out);
+    
+    int charCount = 0;
+    char ch;
+    
+    //set byte offset to beginning of file
+    inOut.seekg(0);
+
+    while( inOut.get(ch))
+        charCount++;
+
+    cout<<" "<<charCount<<" "<<fileName<<endl;
+}
+
+void newLineCounts(char **argv, string fileName)
+{
+    //open file for input and output 
+    //(maybe don't need to open it for output)
+    fstream inOut (fileName.c_str(), ios::in | ios::out);
+    
+    //assume newline at the end of file for linux
+    //operating systems
+    int newLineCount = 0;
+    char ch;
+    
+    //set byte offset to beginning of file
+    inOut.seekg(0);
+    
+    while( inOut.get(ch))
+    {
+        if( ch == '\n' )
+            newLineCount++;
+    }
+    cout<<" "<<newLineCount<<" "<<fileName<<endl;
+}
+
+void wordCount(char **argv, string fileName)
+{
+    //open file for input and output 
+    //(maybe don't need to open it for output)
+    fstream inOut (fileName.c_str(), ios::in | ios::out);
+    
+    //wordCount set to 1 because file could possibly
+    //not include any spaces or new lines
+    int wordCount = 1;
+    char ch;
+    
+    //set byte offset to beginning of file
+    inOut.seekg(0);
+    
+    while( inOut.get(ch))
+    {
+        if( ch == ' ' || ch == '\n')
+            wordCount++;
+    }
+    cout<<" "<<wordCount<<" "<<fileName<<endl;
+}
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ mt[KyWC[K[K[K[K./myWC sample.txt 
+ 28 38 299 sample.txt
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ wc sample.txt 
+ 28  38 299 sample.txt
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ ./myWC -c sample.txt 
+ 299 sample.txt
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ ./myWC -c sample.txt [C[1P[1@l[C[C[C[C[C[C[C[C[C[C
+ 28 sample.txt
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ ./myWC -l sample.txt [1P[1@w[C[C[C[C[C[C[C[C[C[C[C
+ 38 sample.txt
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ cat base.cpp 
+//Classes, Inheritance, and Polymorphism in C++
+#include<iostream>
+
+using namespace std;
+
+class Base
+{
+    public : 
+            virtual void iam();
+};
+
+void Base::iam()
+{
+    cout<<"base"<<endl;
+}
+
+class One : public Base{
+    public: 
+            //need virtual keyword to override
+            virtual void iam() 
+            { 
+                cout<<"class One"<<endl;
+            }
+            void iam2()
+            {
+                Base::iam();
+            }
+};
+
+class Two : public Base{
+    public: 
+            //need virtual keyword to override
+            virtual void iam() 
+            { 
+                cout<<"class Two"<<endl;
+            }
+            void iam2()
+            {
+                Base::iam();
+            }
+};
+
+
+int main()
+{
+    Base b;
+    cout<<"Calling b.iam(): "; b.iam();
+    cout<<endl;
+
+    One o;
+    cout<<"Calling o.iam(): "; o.iam();
+    cout<<"Calling o.iam2(): "; o.iam2();
+    cout<<endl;
+
+    Two t;
+    cout<<"Calling t.iam(): "; t.iam();
+    cout<<"Calling t.iam2(): "; t.iam2();
+    cout<<endl;
+
+    //declaring pointers to address of objects
+    Base *o1Ptr = &o;
+    Base *t1Ptr = &t;
+
+    //calling iam() through pointer
+    o1Ptr->iam();
+    t1Ptr->iam();
+    
+    return 0;
+}]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ ./a.out base.cpp 
+Please enter the correct number of arguments
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ c++ base.cpp 
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ b[K./a.out base.cpp
+Calling b.iam(): base
+
+Calling o.iam(): class One
+Calling o.iam2(): base
+
+Calling t.iam(): class Two
+Calling t.iam2(): base
+
+class One
+class Two
+]0;arnold_se@cobra:~/CSC310/Labs/Lab1[arnold_se@cobra Lab1]$ exit
+exit
+
+Script done on Wed 13 Jan 2021 10:37:12 AM EST
