@@ -78,9 +78,7 @@ void read(BookRec & temp)
                 temp.onhand = atoi(copies.c_str());
             //reads in as string, and then converts it to int
             getline(infile,price,'|');
-            cout<<price<<endl;
-                temp.price = atoi(price.c_str());
-                cout<<temp.price<<endl;
+                temp.price = atof(price.c_str());
             infile.getline(temp.type, 25, '\n');   
             
             //placed after because need to print line
