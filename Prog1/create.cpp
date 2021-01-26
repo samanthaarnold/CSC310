@@ -1,12 +1,10 @@
 //read from text file and create binary file of records of type BookRec
 #include <string>
-#include <sstream>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 #include <cstdlib>
 #include <climits>
-#include <iomanip>
 
 using namespace std;
 
@@ -61,7 +59,7 @@ void read(BookRec & temp)
         infile.ignore(1,'|');
         
         //checks isbn number here, will not be sent to outfile
-        if(!IllegalNumber(tempISBN, lineNum) )
+        if( !IllegalNumber(tempISBN, lineNum) )
         {
             output=false;
             string error;
@@ -94,12 +92,12 @@ void read(BookRec & temp)
         
         if(output)
         {
-            tempISBN = prevISBN;
             outfile.write( (char *) & temp, sizeof(BookRec) );
+            tempISBN = prevISBN;
         } 
     }
-    outfile.seekp( 1*sizeof(temp) );
-    outfile.write( (char *) & temp, sizeof(temp));
+    //outfile.seekp( 1*sizeof(temp) );
+    //outfile.write( (char *) & temp, sizeof(temp));
     outfile.close();
 }
 
@@ -109,10 +107,9 @@ void printLine(BookRec & temp)
     cout<<setw(10)<<setfill('0')<<temp.isbn
 	      <<setw(25)<<setfill(' ')<<temp.name
 	      <<setw(25)<<temp.author
-	      <<setw(3)<<temp.onhand
+	      <<setw(3)<<temp.onhand<<setprecision(4)
 	      <<setw(6)<<temp.price
 	      <<setw(10)<<temp.type<<endl;
-
 }
 
 //Ignores isbn number when it is less than 1, displays an error
@@ -169,10 +166,8 @@ void output(BookRec & temp)
 {
     fstream binfile("library.out", ios::in | ios::binary);
     cout<<endl;
-    while(binfile.read( (char *) &temp, sizeof(temp)) )
+    while(binfile.write( (char *) & temp, sizeof(temp)) )
     {
         printLine(temp);
     }
-
-
 }
