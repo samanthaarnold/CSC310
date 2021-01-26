@@ -29,31 +29,44 @@ struct TransactionRec
     BookRec B;
 };
 
-void readMaster(TransactionRec & T, string & masterfile,  map<int,int> & books);
-void addRecord(TransactionRec & T, map<int,int> & books, int & numTransact, string & transactfile);
-void deleteRecord(TransactionRec & T, map<int,int> & books, int & numTransactions, string & transactfile);
-void changeOnHand(TransactionRec & T, map<int,int> & books, int & numTransactions, string & transactfile);
-void changePrice(TransactionRec & T, map<int,int> & books, int & numTransactions, string & transactfile);
-bool inMap(map<int,int> & books, int isbn);
+void readMaster(TransactionRec & T, string & masterfile,  map<unsigned int,int> & books);
+void readTransact(TransactionRec & T, string & transactfile,  map<unsigned int, int> & books, int & numTransactions, string & masterfile);
+void addRecord(TransactionRec & T, map<unsigned int, int> & books, int & numTransact, string & transactfile);
+void deleteRecord(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, string & transactfile);
+void changeOnHand(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, string & transactfile);
+void changePrice(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, string & transactfile);
+bool inMap(map<unsigned int,int> & books, int isbn);
 int checkOnhand(TransactionRec & T);
 void printLine(TransactionRec & T);
-void printMap(map<int,int> & books);
+void printMap(map<unsigned int, int> & books);
 void printToNewMaster();
 
 int main(int argc, char* argv[])
 {
     if(argc ==4)
     {
+        string masterfile = argv[1];
+        string transactfile = argv[2];
+        string newMasterFile = argv[3];
+        system("cp library.out copy.out");
+
+        TransactionRec T;
+        //stores ISBN and corresponding byte ofset
+        map<unsigned int, int> books;
+        int numTransactions=0;
         
+        readMaster(T, masterfile, books);
+        //printMap(books);
+        cout<<endl;
+        readTransact(T,transactfile,books, numTransactions, masterfile);
+        printMap(books);
     }
     else
     {
         cout<<"Incorrect number of arguments entered"<<endl;
     }
     
-    string masterfile = argv[1];
-    string transactfile = argv[2];
-    string newMasterFile = argv[3];
+    
 
     //read in binary masterfile from create.cpp
         //fstream masterFile(masterfile.c_str(), ios::in|ios::binary);
@@ -63,59 +76,31 @@ int main(int argc, char* argv[])
         //fstream updatedFile (newMasterFile.c_str(), ios::in | ios::binary);
     //txt file that records errors
         //fstream error("ERRORS", ios::out);
-
-    TransactionRec T;
-    //stores ISBN and corresponding byte ofset
-    map<int, int> books;
-    int numTransactions=0;
-
-    //creating map 
-    readMaster(T, masterfile, books);
-    //addRecord(T,books, numTransactions, transactfile);
-
-    //checkOnhand(T);
    
-    switch (T.ToDo)
-    {
-        case Add:
-            //addRecord(T,books, numTransactions, transactfile);
-            break;
-        case Delete:
-            //deleteRecord(T,books, numTransactions, transactfile);
-            break;
-        case ChangeOnhand:
-            //changeOnHand(T,books, numTransactions, transactfile);
-            break;
-        case ChangePrice:
-            //changePrice(T,books, numTransactions, transactfile);
-            break;
-    }
-
     return 0;
 }
 
 //reads the binary master file from create.cpp and will return a map
 //that stores ISBN and corresponding byte offset 
-void readMaster(TransactionRec & T, string & masterfile, map<int,int> & books)
+void readMaster(TransactionRec & T, string & masterfile, map<unsigned int,int> & books)
 {
     //read in binary masterfile from create.cpp
     fstream masterFile(masterfile.c_str(), ios::in|ios::binary);
     
-    masterFile.seekg(0);
     //creating map, inserting isbn num and byte offset
     while(masterFile.read( (char *) & T.B, sizeof(T.B)) )
     {
         //cout<<T.B.isbn<<"\t"<<masterFile.tellg()<<endl;
-            long mark = masterFile.tellg();
-            books[T.B.isbn] = mark;
+        long mark = masterFile.tellg();
+        books[T.B.isbn] = mark;
     }
     printMap(books);
     masterFile.close();
 }
 
-void printMap(map<int,int> & books)
+void printMap(map<unsigned int,int> & books)
 {
-    map<int,int>::iterator itr;
+    map<unsigned int,int>::iterator itr;
     for(itr = books.begin(); itr != books.end(); ++itr)
     {
         cout << '\t' << itr->first 
@@ -124,7 +109,53 @@ void printMap(map<int,int> & books)
 
 }
 
-bool inMap(map<int,int> & books, int isbn)
+void readTransact(TransactionRec & T, string & transactfile,  
+    map<unsigned int, int> & books, int & numTransactions, string & masterfile)
+{
+    fstream transactionFile (transactfile.c_str(), ios::in | ios::binary);
+    fstream masterFile(masterfile.c_str(), ios::out|ios::binary);
+
+    //read in information from transaction file
+
+    string todo;
+    string records;
+    while(transactionFile.read( (char *) & T, sizeof(T)))
+    //while(transactionFile >> todo)
+    {
+        //transactionFile.ignore(1,' ');
+        //getline(transactionFile,records);
+
+        //getline()s
+
+        switch (T.ToDo)
+        {
+            case 0:
+                cout<<"adds"<<endl;
+                addRecord(T,books, numTransactions, transactfile);
+                //printMap(books);
+                cout<<"done"<<endl;
+                return;
+            case 1:
+                cout<<"delete"<<endl;
+                //deleteRecord(T,books, numTransactions, transactfile);
+                break;
+            case 2:
+                cout<<"changeOnhand"<<endl;
+                //changeOnHand(T,books, numTransactions, transactfile);
+                break;
+            case 3:
+                cout<<"changeOnhand"<<endl;
+                //changePrice(T,books, numTransactions, transactfile);
+                break;
+        }
+        //NEED to add to map
+        //write out to copy of masterfile
+        
+    
+    }
+}
+
+bool inMap(map<unsigned int, int> & books, int isbn)
 {
     bool output = books.count(isbn)>=1 ? true : false;
     return output;
@@ -134,29 +165,25 @@ bool inMap(map<int,int> & books, int isbn)
 //information in the TransactionRec. If it does exist, print an error message
 
 //suppose it has already been readin from file and stored in BookRec
-void addRecord(TransactionRec & T, map<int,int> & books, int & numTransactions, string & transactfile)
+void addRecord(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, string & transactfile)
 {
     int tempISBN;
 
     fstream error("ERRORS", ios::out);
-    fstream tFile (transactfile.c_str(), ios::out | ios::binary);
+    fstream tFile (transactfile.c_str(), ios::in | ios::binary);
     
     numTransactions++;
     
     //new ISBN needs to be added to the map and print information in transaction file
     if(!inMap(books,tempISBN))
     {
-        //cout<<"Add"; printLine(T);
-        tFile << "Add "; printLine(T);
-
-        //add to map
+        //add to map 
+        // GET THE BYTE OFSET FROM MASTERFILE COPY
         books[tempISBN];
     }
     //ISBN already exists
     else
     {
-        cout<<"Error in transaction number "<<numTransactions<<
-            ": cannot add---duplicate key "<<tempISBN<<endl;
         error<<"Error in transaction number "<<numTransactions<<
             ": cannot add---duplicate key "<<tempISBN<<endl;
     }
@@ -164,7 +191,7 @@ void addRecord(TransactionRec & T, map<int,int> & books, int & numTransactions, 
 
 //If ISBN exists, remove record from map. Do not print to updated master
 //If it does not exist, print an error message. 
-void deleteRecord(TransactionRec & T, map<int,int> & books, int & numTransactions, string & transactfile)
+void deleteRecord(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, string & transactfile)
 {
     int tempISBN;
 
@@ -200,13 +227,13 @@ int checkOnhand(TransactionRec & T)
     return newOnHand;
 }
 
-void changeOnHand(TransactionRec & T, map<int,int> & books, int & numTransactions, string & transactfile)
+void changeOnHand(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, string & transactfile)
 {
     //set equal to method checkOnhand
     int newOnHand;
 
     fstream error("ERRORS", ios::out);
-    fstream tFile (transactfile.c_str(), ios::out | ios::binary);
+    fstream tFile (transactfile.c_str(), ios::in | ios::binary);
     
     numTransactions++;
     
@@ -238,12 +265,12 @@ void changeOnHand(TransactionRec & T, map<int,int> & books, int & numTransaction
 
 //checks to see if the ISBN is already in the map, if it is then change the price from the transaction file
 //if ISBN is not in the map, then send error message
-void changePrice(TransactionRec & T, map<int,int> & books, int & numTransactions, string & transactfile)
+void changePrice(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, string & transactfile)
 {
     int newPrice;
 
     fstream error("ERRORS", ios::out);
-    fstream tFile (transactfile.c_str(), ios::out | ios::binary);
+    fstream tFile (transactfile.c_str(), ios::in | ios::binary);
     
     numTransactions++;
     
@@ -251,7 +278,6 @@ void changePrice(TransactionRec & T, map<int,int> & books, int & numTransactions
     if(inMap(books,T.B.isbn))
     {
         T.B.price = newPrice;
-        tFile << "ChangePrice "; printLine(T);
     }
     //ISBN already exists
     else

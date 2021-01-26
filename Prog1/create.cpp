@@ -166,7 +166,7 @@ void output(BookRec & temp)
 {
     fstream binfile("library.out", ios::in | ios::binary);
     cout<<endl;
-    while(binfile.write( (char *) & temp, sizeof(temp)) )
+    while(binfile.read( (char *) & temp, sizeof(temp)) )
     {
         printLine(temp);
     }
