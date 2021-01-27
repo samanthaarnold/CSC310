@@ -30,11 +30,13 @@ struct TransactionRec
 };
 
 void readMaster(TransactionRec & T, string & masterfile,  map<unsigned int,int> & books);
-void readTransact(TransactionRec & T, string & transactfile,  map<unsigned int, int> & books, int & numTransactions, string & masterfile);
+void readTransact(TransactionRec & T, string & transactfile,  map<unsigned int, int> & books,
+ int & numTransactions, string & masterfile);
 void addRecord(TransactionRec & T, map<unsigned int, int> & books, int & numTransact, fstream & masterFile);
 void deleteRecord(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions);
 void changeOnHand(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, fstream & masterFile);
-void changePrice(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, int & newPrice, fstream & masterFile);
+void changePrice(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, 
+int & newPrice, fstream & masterFile);
 bool inMap(map<unsigned int,int> & books, int isbn);
 void printLine(TransactionRec & T);
 void printMap(map<unsigned int, int> & books);
@@ -51,6 +53,7 @@ int main(int argc, char* argv[])
         //update.out
         string newMasterFile = argv[3];
         
+        //creates a copy of library so masterfile cannot be altered
         system("cp library.out copy.out");
 
         TransactionRec T;
@@ -59,10 +62,8 @@ int main(int argc, char* argv[])
         int numTransactions=0;
         
         readMaster(T, masterfile, books);
-        //printMap(books);
-       
         readTransact(T,transactfile,books, numTransactions, masterfile);
-        printMap(books);
+        //printMap(books);
         printToNewMaster(T,books,newMasterFile);
         system("rm copy.out");
     }
@@ -70,16 +71,6 @@ int main(int argc, char* argv[])
     {
         cout<<"Incorrect number of arguments entered"<<endl;
     }
-
-    //read in binary masterfile from create.cpp
-        //fstream masterFile(masterfile.c_str(), ios::in|ios::binary);
-    //keep records of transactions, open a new binary file
-        //fstream transactionFile (transactfile.c_str(), ios::out | ios::binary);
-    //make new masterfile with updated records
-        //fstream updatedFile (newMasterFile.c_str(), ios::in | ios::binary);
-    //txt file that records errors
-        //fstream error("ERRORS", ios::out);
-   
     return 0;
 }
 
@@ -93,15 +84,14 @@ void readMaster(TransactionRec & T, string & masterfile, map<unsigned int,int> &
     //creating map, inserting isbn num and byte offset
     while(masterFile.read( (char *) & T.B, sizeof(T.B)) )
     {
-        //cout<<T.B.isbn<<"\t"<<masterFile.tellg()<<endl;
         long mark = masterFile.tellg();
         books[T.B.isbn] = mark;
     }
-    //printMap(books);
     masterFile.close();
     masterFile.clear();
 }
 
+//create iterator to print what is in map
 void printMap(map<unsigned int,int> & books)
 {
     map<unsigned int,int>::iterator itr;
@@ -110,9 +100,9 @@ void printMap(map<unsigned int,int> & books)
         cout << '\t' << itr->first 
              << '\t' << itr->second << '\n'; 
     }
-
 }
 
+//reads transact file and and adds, deletes, changes onHand and price
 void readTransact(TransactionRec & T, string & transactfile,  
     map<unsigned int, int> & books, int & numTransactions, string & masterfile)
 {
@@ -150,6 +140,8 @@ void readTransact(TransactionRec & T, string & transactfile,
     masterFile.clear();
 }
 
+//checking to see if ISBN is in map
+//we know its in the map if the count is greater than 1
 bool inMap(map<unsigned int, int> & books, int isbn)
 {
     bool output = books.count(isbn)>=1 ? true : false;
@@ -162,7 +154,7 @@ void addRecord(TransactionRec & T, map<unsigned int, int> & books, int & numTran
 {
     numTransactions++;
     
-    //new ISBN needs to be added to the map and print information in transaction file
+    //new ISBN needs to be added to the map
     if(!inMap(books,T.B.isbn))
     {
         //add ISBN and other information to copy of masterfile
@@ -216,6 +208,7 @@ void changeOnHand(TransactionRec & T, map<unsigned int, int> & books, int & numT
     //setting byte counter to beginning of isbn stored in map
     masterFile.seekp(books[T.B.isbn]-sizeof(T.B), ios::beg);
     masterFile.read( (char *) & T.B, sizeof(T.B) );
+    
     //finding the onhand from copy of masterFile
     int oldOnhand = T.B.onhand;
     
@@ -224,13 +217,15 @@ void changeOnHand(TransactionRec & T, map<unsigned int, int> & books, int & numT
 
     fstream error("ERRORS", ios::app | ios::out);
 
-    //new ISBN needs to be added to the map and print information in transaction file
+    //check to see if ISBN is in the map
     if(inMap(books,T.B.isbn))
     {   
-        //if onHand is negative
+        //if onHand value is negative, print error and set onhand to 0
         if(newOnhand < 0)
         {
             T.B.onhand = 0;
+            masterFile.seekp(books[T.B.isbn]-sizeof(T.B), ios::beg);
+            masterFile.write( (char *) & T.B, sizeof(T.B) );
             error<<"Error in transaction number "<<numTransactions<<
                 ": count = "<< newOnhand <<"for key "<<T.B.isbn<<endl;
         }
@@ -278,6 +273,7 @@ void changePrice(TransactionRec & T, map<unsigned int, int> & books, int & numTr
     }
 }
 
+//print every line, credit to Dr. Digh
 void printLine(TransactionRec & T)
 {
     cout<<setw(10)<<setfill('0')<<T.B.isbn
@@ -290,7 +286,6 @@ void printLine(TransactionRec & T)
 
 //we have isbn num, and byte ofset. Byte ofset is the end of the line so 
 // need find the previous byte ofset and then move till the end of that byte ofset
-//use seekp() 
 void printToNewMaster(TransactionRec & T, map<unsigned int, int> & books, string & newMasterFile)
 {
     fstream masterFile("copy.out", ios::in|ios::binary);
@@ -299,19 +294,13 @@ void printToNewMaster(TransactionRec & T, map<unsigned int, int> & books, string
     //create iterator to go through map and get byte values
     for(itr = books.begin(); itr != books.end(); ++itr)
     {
+        //given the byte count at the end of the line, move seekg to beginning of the line and read
         masterFile.seekg(itr->second - sizeof(T.B), ios::beg);
         masterFile.read( (char *) & T.B, sizeof(T.B) );
         //write to updated binary file
         update.write( (char *) & T.B, sizeof(T.B) );   
     }
-    update.clear();
     
-    //print to screen
-    update.seekp(0,ios::beg);
-    while(update.read( (char *) & T.B, sizeof(T.B)) )
-    {
-        printLine(T);
-    }
     update.close();
     masterFile.close();
 }

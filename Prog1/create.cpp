@@ -32,9 +32,14 @@ int main(int argc, char* argv[])
     //check number of arguments
     if(argc == 1)
     {
+        cout<<endl;
         BookRec temp;
         read(temp);
+        cout<<endl;
+        for (int i=0; i<80; i++) cout<<'^'; cout<<endl;
         output(temp);
+        cout<<endl;
+        for (int i=0; i<80; i++) cout<<'^'; cout<<endl;
     }
 
     return 0;
@@ -107,9 +112,9 @@ void printLine(BookRec & temp)
     cout<<setw(10)<<setfill('0')<<temp.isbn
 	      <<setw(25)<<setfill(' ')<<temp.name
 	      <<setw(25)<<temp.author
-	      <<setw(3)<<temp.onhand<<setprecision(4)
-	      <<setw(6)<<temp.price
-	      <<setw(10)<<temp.type<<endl;
+	      <<setw(3)<<temp.onhand;
+            printf("%6.2f", temp.price);
+	      cout<<setw(10)<<temp.type<<endl;
 }
 
 //Ignores isbn number when it is less than 1, displays an error
