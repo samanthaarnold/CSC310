@@ -34,7 +34,7 @@ void readTransact(TransactionRec & T, string & transactfile,  map<unsigned int, 
 void addRecord(TransactionRec & T, map<unsigned int, int> & books, int & numTransact, fstream & masterFile);
 void deleteRecord(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions);
 void changeOnHand(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, fstream & masterFile);
-void changePrice(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, int & newPrice);
+void changePrice(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, int & newPrice, fstream & masterFile);
 bool inMap(map<unsigned int,int> & books, int isbn);
 void printLine(TransactionRec & T);
 void printMap(map<unsigned int, int> & books);
@@ -64,7 +64,7 @@ int main(int argc, char* argv[])
         readTransact(T,transactfile,books, numTransactions, masterfile);
         printMap(books);
         printToNewMaster(T,books,newMasterFile);
-       // system("rm copy.out");
+        system("rm copy.out");
     }
     else
     {
@@ -141,7 +141,7 @@ void readTransact(TransactionRec & T, string & transactfile,
                 break;
             case 3:
                 //cout<<"changePrice"<<endl;
-                changePrice(T,books, numTransactions, newPrice);
+                changePrice(T,books, numTransactions, newPrice, masterFile);
                 break;
         }
     }
@@ -216,11 +216,12 @@ void changeOnHand(TransactionRec & T, map<unsigned int, int> & books, int & numT
     //setting byte counter to beginning of isbn stored in map
     masterFile.seekp(books[T.B.isbn]-sizeof(T.B), ios::beg);
     masterFile.read( (char *) & T.B, sizeof(T.B) );
+    //finding the onhand from copy of masterFile
     int oldOnhand = T.B.onhand;
     
     //finding newOnhand amount
     int newOnhand = tranactOnhand+oldOnhand;
-    cout<<newOnhand<<endl;
+
     fstream error("ERRORS", ios::app | ios::out);
 
     //new ISBN needs to be added to the map and print information in transaction file
@@ -236,7 +237,9 @@ void changeOnHand(TransactionRec & T, map<unsigned int, int> & books, int & numT
         else
         {
             T.B.onhand = newOnhand;
-           
+            //writing over new onhand amount to copy of masterfile
+            masterFile.seekp(books[T.B.isbn]-sizeof(T.B), ios::beg);
+            masterFile.write( (char *) & T.B, sizeof(T.B) );
         }  
     }
     //ISBN does not exist in map
@@ -251,16 +254,19 @@ void changeOnHand(TransactionRec & T, map<unsigned int, int> & books, int & numT
 
 //checks to see if the ISBN is already in the map, if it is then change the price from the transaction file
 //if ISBN is not in the map, then send error message
-void changePrice(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, int & newPrice)
+void changePrice(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, int & newPrice, fstream & masterFile)
 {
     numTransactions++;
-    cout<<newPrice<<endl;
-    cout<<T.B.isbn<<endl;
-
+    
     //new ISBN needs to be added to the map and print information in transaction file
     if(inMap(books,T.B.isbn))
     {
+        masterFile.seekp(books[T.B.isbn]-sizeof(T.B), ios::beg);
+        masterFile.read( (char *) & T.B, sizeof(T.B) );
         T.B.price = newPrice;
+        //changing price on copy of masterfile
+        masterFile.seekp(books[T.B.isbn]-sizeof(T.B), ios::beg);
+        masterFile.write( (char *) & T.B, sizeof(T.B) );
     }
     //ISBN already exists
     else
@@ -290,15 +296,15 @@ void printToNewMaster(TransactionRec & T, map<unsigned int, int> & books, string
     fstream masterFile("copy.out", ios::in|ios::binary);
     fstream update(newMasterFile.c_str(), ios::in|ios::out|ios::binary);
     map<unsigned int,int>::iterator itr;
+    //create iterator to go through map and get byte values
     for(itr = books.begin(); itr != books.end(); ++itr)
     {
         masterFile.seekg(itr->second - sizeof(T.B), ios::beg);
         masterFile.read( (char *) & T.B, sizeof(T.B) );
-        
+        //write to updated binary file
         update.write( (char *) & T.B, sizeof(T.B) );   
     }
     update.clear();
-    
     
     //print to screen
     update.seekp(0,ios::beg);
