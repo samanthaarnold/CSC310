@@ -1,0 +1,72 @@
+Analysis and Design For Part III (Update.cpp)-
+
+The goal of client program called update.cpp is to create a program to handle 
+the inventory for a small book company using sequential records. The program
+should be set up to take the name of the master file, transaction file, and 
+new master file from the command line. 
+
+The program should go through the master file and transaction file and 
+create two new files, a new master file and an error file named ERRORS. 
+The new master file is another binaryfile of book records and the error file 
+is a text file. The current inventory of book stocks will be kept in a master 
+binary file that was created in part 2 of the project called create.cpp. It 
+can be assumed that from this file every ISBN is unique, and the price and on
+hand amount is nonnegative. The input from the masterfile should be read in, 
+and the books ISBN and its byte offset should be stored in a map. The computer 
+never has more than two book records or more than one transaction record
+in main memory at one time. The original master file should not be modified in 
+any way during the program, so a copy of it should be made within the program 
+and deleted at the end of the program.
+
+The program should preform the transaction as specified in the transaction file.
+The transaction file is formated similarly to the master file, but has an 
+additional field that specifies what transaction to preform. The transactions 
+the program can preform are add, delete, change on hand, and change price. 
+
+When the transaction type is add, the program should check to see if the ISBN 
+does not already exists in map. If the ISBN does not exist, the add the new 
+record to the end of the copy of the masterfile. Add the ISBN to the map 
+and the byte count of the end of that line. If the ISBN already exists, then
+an error message should print to the ERRORS file that includes the transaction
+record causing the error and the duplicate ISBN number. 
+
+When the transaction type is delete, if the ISBN already exists, then the record
+should not be added to the new master file. Remove this ISBN from the map. 
+If the ISBN does not already exists, then an error message should print to the 
+ERRORS file that includes the transaction record causing the error and the ISBN
+that does not exist. 
+
+When the transaction type is change on hand, if the ISBN already exists, then  
+the onhand needs to be retreived from the copy of the master file, and 
+added to the onhand from the transaction file. The program should also check 
+to see if the new onhand is negative. If the new onhand is negative, and error 
+message should be printed to the ERROR file that includes the transaction number, 
+the onhand count, and the ISBN number. The onhand in the updated master file 
+should also be changed to 0. To get the correct position to write over, the
+use the map to find the end of the byte position at the end of the line, and 
+then subtract the size of records using the SIZEOF method. This will position
+you at the front of the line and will update the copy of the master file with 
+the correct onhand count. If the ISBN does not already exists, then an error 
+message should print to the ERRORS file that includes the transaction record 
+causing the error and the ISBN that does not exist. 
+
+When the transaction type is changed to price, if the ISBN already exists, 
+then change the field to the price field of the transaction record. You will 
+need to write over that line on the copy of the masterfile, so use the instructions
+from above to do update the price. If the ISBN does not already exists, then an 
+error message should print to the ERRORS file that includes the transaction record 
+causing the error and the ISBN that does not exist. 
+
+The updated binary file that should be sorted in ascending order by ISBN. 
+Since the map is already sorted in ascending ISBN order, we can use the map to 
+print the updated binary file. Use an iterator to print the map, and since the
+map stores the byte position at the end of the line, we can subtract the size of 
+records using the SIZEOF method and this will get us to the beginning of the line.
+So, set the byte counter to the beginning of the line. Read the line from the copy of 
+the master file, and then write this line to the updated master file and print to 
+the screen. Unlike the algorithm for the create.cpp file, you do not have to read 
+from the new master file to print to the screen, so you can be more efficient by 
+printing to the screen at the you are building the new master file. This saves 
+time because you are limiting the number of times you are going out to disc access. 
+
+

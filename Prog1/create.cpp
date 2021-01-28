@@ -1,4 +1,3 @@
-//read from text file and create binary file of records of type BookRec
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -22,7 +21,7 @@ struct BookRec
 
 bool IllegalNumber(long tempISBN, int lineNum);
 bool NumberOutOfSequence(long tempISBN, int lineNum, long prevISBN, BookRec & temp);
-bool IllegalOnHandPrice(int lineNum, BookRec & temp);
+bool IllegalOnHandOrPrice(int lineNum, BookRec & temp);
 void read(BookRec & temp);
 void printLine(BookRec & temp);
 void output(BookRec & temp);
@@ -36,10 +35,10 @@ int main(int argc, char* argv[])
         BookRec temp;
         read(temp);
         cout<<endl;
-        for (int i=0; i<80; i++) cout<<'^'; cout<<endl;
+        for (int i=0; i<80; i++) cout<<'*';
         output(temp);
-        cout<<endl;
-        for (int i=0; i<80; i++) cout<<'^'; cout<<endl;
+        
+        for (int i=0; i<80; i++) cout<<'*'; cout<<endl;
     }
 
     return 0;
@@ -86,7 +85,7 @@ void read(BookRec & temp)
             
             //placed after because need to print line
             // will not be sent to outfile
-            if(!IllegalOnHandPrice(lineNum, temp))
+            if(!IllegalOnHandOrPrice(lineNum, temp))
             {
                 output = false;
             }
@@ -101,8 +100,7 @@ void read(BookRec & temp)
             tempISBN = prevISBN;
         } 
     }
-    //outfile.seekp( 1*sizeof(temp) );
-    //outfile.write( (char *) & temp, sizeof(temp));
+    infile.clear();
     outfile.close();
 }
 
@@ -152,7 +150,7 @@ bool NumberOutOfSequence(long tempISBN, int lineNum, long prevISBN, BookRec & te
 //If either of the fields is < 0, it is considered illegal and
 // an error message should be written to cerr and the illegal
 // record should be written to cout. Record should be ignored.
-bool IllegalOnHandPrice(int lineNum, BookRec & temp)
+bool IllegalOnHandOrPrice(int lineNum, BookRec & temp)
 {
     if(temp.price < 0 || temp.onhand < 0)
     {
@@ -175,4 +173,5 @@ void output(BookRec & temp)
     {
         printLine(temp);
     }
+    binfile.close();
 }

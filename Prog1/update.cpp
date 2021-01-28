@@ -1,4 +1,3 @@
-// commandline ./update library.out transaction.out update.out
 #include <string>
 #include <fstream>
 #include <iostream>
@@ -38,9 +37,9 @@ void changeOnHand(TransactionRec & T, map<unsigned int, int> & books, int & numT
 void changePrice(TransactionRec & T, map<unsigned int, int> & books, int & numTransactions, 
 int & newPrice, fstream & masterFile);
 bool inMap(map<unsigned int,int> & books, int isbn);
-void printLine(TransactionRec & T);
 void printMap(map<unsigned int, int> & books);
 void printToNewMaster(TransactionRec & T, map<unsigned int, int> & books, string & newMasterFile);
+void printLine(TransactionRec & T);
 
 int main(int argc, char* argv[])
 {
@@ -63,8 +62,10 @@ int main(int argc, char* argv[])
         
         readMaster(T, masterfile, books);
         readTransact(T,transactfile,books, numTransactions, masterfile);
-        //printMap(books);
+        for (int i=0; i<80; i++) cout<<'*'; cout<<endl;
         printToNewMaster(T,books,newMasterFile);
+        for (int i=0; i<80; i++) cout<<'*'; cout<<endl;
+
         system("rm copy.out");
     }
     else
@@ -118,19 +119,15 @@ void readTransact(TransactionRec & T, string & transactfile,
         switch (T.ToDo)
         {
             case 0:
-                //cout<<"adds"<<endl;
                 addRecord(T,books, numTransactions, masterFile);
                 break;
             case 1:
-                //cout<<"delete"<<endl;
                 deleteRecord(T,books, numTransactions);
                 break;
             case 2:
-                //cout<<"changeOnhand"<<endl;
                 changeOnHand(T,books, numTransactions, masterFile);
                 break;
             case 3:
-                //cout<<"changePrice"<<endl;
                 changePrice(T,books, numTransactions, newPrice, masterFile);
                 break;
         }
@@ -227,7 +224,7 @@ void changeOnHand(TransactionRec & T, map<unsigned int, int> & books, int & numT
             masterFile.seekp(books[T.B.isbn]-sizeof(T.B), ios::beg);
             masterFile.write( (char *) & T.B, sizeof(T.B) );
             error<<"Error in transaction number "<<numTransactions<<
-                ": count = "<< newOnhand <<"for key "<<T.B.isbn<<endl;
+                ": count = "<< newOnhand <<" for key "<<T.B.isbn<<endl;
         }
         else
         {
@@ -273,19 +270,8 @@ void changePrice(TransactionRec & T, map<unsigned int, int> & books, int & numTr
     }
 }
 
-//print every line, credit to Dr. Digh
-void printLine(TransactionRec & T)
-{
-    cout<<setw(10)<<setfill('0')<<T.B.isbn
-	      <<setw(25)<<setfill(' ')<<T.B.name
-	      <<setw(25)<<T.B.author
-	      <<setw(3)<<T.B.onhand<<setprecision(4)
-	      <<setw(6)<<T.B.price
-	      <<setw(10)<<T.B.type<<endl;
-}
-
 //we have isbn num, and byte ofset. Byte ofset is the end of the line so 
-// need find the previous byte ofset and then move till the end of that byte ofset
+// subtract sizeof line to get to beginning of line and set seekg there
 void printToNewMaster(TransactionRec & T, map<unsigned int, int> & books, string & newMasterFile)
 {
     fstream masterFile("copy.out", ios::in|ios::binary);
@@ -297,10 +283,21 @@ void printToNewMaster(TransactionRec & T, map<unsigned int, int> & books, string
         //given the byte count at the end of the line, move seekg to beginning of the line and read
         masterFile.seekg(itr->second - sizeof(T.B), ios::beg);
         masterFile.read( (char *) & T.B, sizeof(T.B) );
-        //write to updated binary file
-        update.write( (char *) & T.B, sizeof(T.B) );   
+        //write to updated binary file and print to screen
+        update.write( (char *) & T.B, sizeof(T.B) );
+        printLine(T);   
     }
-    
     update.close();
     masterFile.close();
+}
+
+//print method from Dr. Digh
+void printLine(TransactionRec & T)
+{
+    cout<<setw(10)<<setfill('0')<<T.B.isbn
+	      <<setw(25)<<setfill(' ')<<T.B.name
+	      <<setw(25)<<T.B.author
+	      <<setw(3)<<T.B.onhand;
+            printf("%6.2f", T.B.price);
+	      cout<<setw(10)<<T.B.type<<endl;
 }
