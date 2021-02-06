@@ -65,7 +65,6 @@ int main(int argc, char* argv[])
         for (int i=0; i<80; i++) cout<<'*'; cout<<endl;
         printToNewMaster(T,books,newMasterFile);
         for (int i=0; i<80; i++) cout<<'*'; cout<<endl;
-
         system("rm copy.out");
     }
     else
