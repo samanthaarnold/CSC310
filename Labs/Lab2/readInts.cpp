@@ -1,55 +1,52 @@
 #include <fstream>
 #include <iostream>
-#include <cctype>
 
 using namespace std;
 
+int file(fstream & inFile);
+
 int main(int argc, char* argv[])
 {
-    fstream inFile("fileSum", ios::in);
+    fstream inFile("fileSum.txt", ios::in);
     
-    /* filebuf fb;
-    if (fb.open ("fileSum.txt", ios::in) )
-    {
-        istream is(&fb);
-        
-        while (is)
-        {
-            cout << is <<endl;;
-        }
-        fb.close();
-    }
-    cout<<"test"<<endl;
-    */
+    int sum = file(inFile);
 
-    int sum =0;
-    char x;
+    if(sum != -1)
+        cout<<"Sum: "<<sum<<endl;
+    else
+        cout<<"File is not in correct format"<<endl;
     
-    int c = inFile.peek();
-    cout<<"peek: "<<c<<endl;
-    
-    while(inFile >> x)
-    {
-        
-        if(isdigit(c))
-        {
-            sum += x;
-            cout<<"current sum "<<sum<<endl;
-        }
-
-        if(c == ',' || c == ' ')
-        {
-            inFile.ignore();
-        }
-
-        if(c == ';')
-        {
-            return -1;
-        }
-    }
-    
-   
-    cout<<sum<<endl;
-
+    inFile.close();
     return 0;
+}
+
+int file(fstream & inFile)
+{
+    int temp, sum=0;
+    
+    //checks to make sure beginning of file starts with ints
+    while(!isdigit(inFile.peek()))
+        inFile.ignore();
+    
+    while (inFile >> temp)
+    {
+        //cout<<"temp: "<<temp<<endl;
+        sum+=temp;
+        
+        //checks if next input is a char and not end of file
+        if(!isdigit(inFile.peek()) && inFile.peek() != EOF)
+        {
+            //skips over commas, new lines, and spaces
+            if(inFile.peek() ==',' || inFile.peek() =='\n' || inFile.peek() ==' ')
+                inFile.ignore();
+            
+            else
+            {
+                sum = -1;
+                break;
+            } 
+        }
+    }
+    
+    return sum;
 }
