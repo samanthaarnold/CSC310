@@ -7,7 +7,7 @@ int file(fstream & inFile);
 
 int main(int argc, char* argv[])
 {
-    fstream inFile("fileSum.txt", ios::in);
+    fstream inFile(argv[1], ios::in);
     
     int sum = file(inFile);
 
@@ -46,7 +46,6 @@ int file(fstream & inFile)
                 break;
             } 
         }
-    }
-    
+    } 
     return sum;
 }

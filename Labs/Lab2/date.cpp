@@ -10,17 +10,20 @@ string convertMonthToInt(string & month);
 
 int main(int argc, char* argv[]) 
 {
-    fstream inFile("canonical.txt", ios::in);
+    fstream inFile(argv[1], ios::in);
     
     string month, day, year, date;
     
     //reads in month
     getline(inFile, month, ' ');
         date += convertMonthToInt(month);
+    //reads in the date
     getline(inFile, day, ',');
         date+=day;
+    //reads in year
     inFile >> year;
         date+=year;
+   
     inFile.close();
 
     //convert string to long
