@@ -74,6 +74,7 @@ stack<char> tail(string fileName, int numLinesPrint)
     int line = 0;
     char token;
     stack <char> c;
+    inOut.gcount();
     
     //outer while loop is keeping track of how many lines to print
     while(line != numLinesPrint)
