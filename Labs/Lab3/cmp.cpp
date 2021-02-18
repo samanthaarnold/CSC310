@@ -3,6 +3,10 @@
 #include<fstream>
 #include <cstring>
 #include <cstdlib>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <utime.h>
+
 
 using namespace std;
 
@@ -32,73 +36,79 @@ int main(int argc, char **argv)
         else
         {
             cout<<"Please enter correct option"<<endl;
-        }
-        
+        } 
     }
-
-    int byte = 0;
-    char ch1,ch2;
-    int line = 1;
 
     //file1
     fstream inFile1(argv[argc-2], ios::in);
     //file2
     fstream inFile2(argv[argc-1], ios::in);
     
+    //Check if input is directory, code from Dr. Digh
+    struct stat buf;
+    struct utimbuf timebuf;
+    char *token;
+
+    for (int i = argc-2;  i < argc;  i++)
+    {
+        lstat (argv[i], &buf);
+        if (S_ISREG(buf.st_mode))
+        {
+            //check to make sure beginning of file is not an empty file
+            if(inFile1.peek() == EOF)
+            {   
+                cout<<"cmp: "<<argv[argc-1]<<" is empty"<<endl;
+                return 1; 
+            }
+            if(inFile2.peek() == EOF)
+            {
+                cout<<"cmp: "<<argv[argc-2]<<" is empty"<<endl;
+                return 1;
+            }   
+        }
+        else if (S_ISDIR(buf.st_mode))
+        {
+            cout << argv[i] << "is a directory "<<endl;
+        }
+    }
+    
+    int byte = 0;
+    char ch1,ch2;
+    int line = 1;
+
     //positions read head to 0 if no -i, and to correct position if -i
     if(iv)
         inFile1.seekg(iline,ios::beg); inFile2.seekg(iline,ios::beg);
     
-    //check to make sure beginning of file is not an empty file
-    /*
-    if(inFile1.good() && byte==0)
-    {   
-        cout<<1<<endl;
-        cout<<"cmp: EOF on "<<argv[argc-2]<<endl; 
-    }
-    if(inFile2.good() && byte==0)
-    {
-        cout<<2<<endl;
-        cout<<"cmp: EOF on "<<argv[argc-1]<<endl;
-    }   
-    */
-
+   
     while(inFile1.get(ch1) && inFile2.get(ch2))
     {
         byte++;
-        //cout<<"ch1: "<<ch1<<"\t chr2: "<<ch2<<endl;
         if(ch1=='\n')
             line++;
-   
+
         if(ch1!=ch2)
         {
             if(c)
             {
-                cout<<"test"<<endl;
+                printf("%s %s differ: char %d, line %i is %o %c %o %c ", argv[argc-2], argv[argc-1], byte, line, ch1, ch1, ch2, ch2);
+                cout<<endl;
             } 
             else
             {
                 cout<<argv[argc-2]<<" "<<argv[argc-1]<<" differ: byte "<<byte<<", line "<<line<<endl;
             }
             return 1;
-        }
-        
+        } 
     }
-    
-    /*
+
     //reached end of inFile2 before inFile1
-    if(inFile1.good() && !inFile2.good())
-    {
-        cout<<3<<endl;
+    if(inFile1.peek() != EOF && inFile2.peek() == EOF )
         cout<<"cmp: EOF on "<<argv[argc-1]<<endl;
-    }
+
     //reached end of inFile1 before inFile2
-    if(!inFile1.good() && inFile2.good())
-    {
-        cout<<4<<endl;
+    if(inFile1.peek() == EOF && inFile2.peek() != EOF )
         cout<<"cmp: EOF on "<<argv[argc-2]<<endl;
-    }
-    */
-
-
+    
+    return 0;
 }
