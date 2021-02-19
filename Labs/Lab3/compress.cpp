@@ -6,25 +6,24 @@
 
 using namespace std;
 
-void compress(string & input);
-void uncompress(string & input);
+string compress(string & input);
+string uncompress(string & input);
 
 int main(int argc, char **argv)
 {
     string myInput = "93 93 93 93 92 91 91 94 94 94 94 94 95 95 95 73 73 73 73 73 73 73";
-	compress(myInput);
-    cout<<endl;
+	string myOutput = compress(myInput);
     
-    string myOutput = "ff 93 04 92 91 91 ff 94 05 95 95 95 ff 73 07";
-    uncompress(myOutput);
-    cout<<endl;
+    cout<<myOutput<<endl;
+    cout<< uncompress(myOutput) << endl;
     
     return 0;
 }
 
-void compress(string & input)
+string compress(string & input)
 {
-    stringstream ss(input);
+    istringstream ss(input);
+    ostringstream c;
 
     int count=1;
     string token, last;
@@ -38,12 +37,13 @@ void compress(string & input)
         else
         {
             if(count >=4)
-                cout<<"ff "<<last<<" "<<count<<" ";
-
+            {
+                c<<"ff "<<last<<" "<<count<<" ";
+            }
             else
             {
                 for(int i=0; i<count; i++)
-                    cout<<last<<" ";
+                    c<<last<<" ";
             }
             count = 1;
         }
@@ -52,18 +52,21 @@ void compress(string & input)
 
     //prints last input
     if(count >=4)
-        cout<<"ff "<<last<<" "<<count<<" ";
+        c<<"ff "<<last<<" "<<count<<" ";
 
     else
     {
         for(int i=0; i<count; i++)
-            cout<<last<<" ";
+            c<<last<<" ";
     }  
+
+    return c.str();
 }
 
-void uncompress(string & input)
+string uncompress(string & input)
 {
     stringstream ss(input);
+    ostringstream c;
 
     string num, freq;
 
@@ -78,9 +81,11 @@ void uncompress(string & input)
                 int f = atoi(freq.c_str());
 
             for(int j=0; j < f; j++)
-                cout<<num<<" ";
+                c<<num<<" ";
         }
         else
-            cout<<num<<" ";
+            c<<num<<" ";
     }
+    
+    return c.str();
 }
