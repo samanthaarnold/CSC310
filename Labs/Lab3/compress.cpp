@@ -11,9 +11,13 @@ void uncompress(string & input);
 
 int main(int argc, char **argv)
 {
-    string myInput = "93 93 93 93 92 91 91 94 94 94 94 95 95 95 73 73 73 73 73 73 73";
-
-    compress(myInput);
+    string myInput = "93 93 93 93 92 91 91 94 94 94 94 94 95 95 95 73 73 73 73 73 73 73";
+	compress(myInput);
+    cout<<endl;
+    
+    string myOutput = "ff 93 04 92 91 91 ff 94 05 95 95 95 ff 73 07";
+    uncompress(myOutput);
+    cout<<endl;
     
     return 0;
 }
@@ -21,46 +25,62 @@ int main(int argc, char **argv)
 void compress(string & input)
 {
     stringstream ss(input);
-    int count=0;
-    string token, prev;
-    
-    ss >> prev;
-    while(ss >> token)
+
+    int count=1;
+    string token, last;
+
+    getline(ss,last,' ');
+    while(getline(ss,token,' '))
     {
-        //ss >> next;
-        cout<<"prev "<<prev<<"\t"<<"next "<<token<<endl;
-        if(token == prev)
-        {
+        if(token == last)
             count++;
-            cout<<"same "<<count<<endl;
-            prev=token;
-        }
+        
         else
         {
-            count=0;
+            if(count >=4)
+                cout<<"ff "<<last<<" "<<count<<" ";
+
+            else
+            {
+                for(int i=0; i<count; i++)
+                    cout<<last<<" ";
+            }
+            count = 1;
         }
-        
-        //cout<<token<<"\t"<<next<<endl;
+        last = token;
     }
 
-    
+    //prints last input
+    if(count >=4)
+        cout<<"ff "<<last<<" "<<count<<" ";
 
-    
+    else
+    {
+        for(int i=0; i<count; i++)
+            cout<<last<<" ";
+    }  
 }
 
 void uncompress(string & input)
 {
     stringstream ss(input);
-    //vector< pair<int,int> > v;
 
-    //map<int, int> m;
-    int num;
-    string token;
-    
-    while(getline(ss, token, ' '))
+    string num, freq;
+
+    while( getline(ss,num,' ') )
     {
-        num = atoi(token.c_str());
-        //counts frequency of numbers from string and adds to map
-       // m.find(num) == m.end() ? m[num]=1 : m[num]++ ;
+        if(num == "ff")
+        {
+            //number
+            getline(ss,num,' ');
+            //frequency
+            getline(ss,freq,' ');
+                int f = atoi(freq.c_str());
+
+            for(int j=0; j < f; j++)
+                cout<<num<<" ";
+        }
+        else
+            cout<<num<<" ";
     }
 }
