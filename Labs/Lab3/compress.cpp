@@ -37,9 +37,7 @@ string compress(string & input)
         else
         {
             if(count >=4)
-            {
                 c<<"ff "<<last<<" "<<count<<" ";
-            }
             else
             {
                 for(int i=0; i<count; i++)
