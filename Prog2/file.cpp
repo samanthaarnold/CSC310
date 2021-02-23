@@ -36,6 +36,7 @@ string File::getSize() const
 	return size;
 }
 
+//Default Constructor
 File::File ()
 {
        strcpy (name, "\0");  strcpy (pmode, "\0");
@@ -52,6 +53,7 @@ File::File (const char myName[], const char myPmode[],
        ADir = false;
 }
 
+//opperator overloading with deep copy
 File & File::operator = (const File& otherFile)
 {
        strcpy (name, otherFile.name);
@@ -61,7 +63,8 @@ File & File::operator = (const File& otherFile)
        ADir = otherFile.ADir;
        return *this;
 }
-       
+
+//copy constructor
 File::File (const File& otherFile)
 {
        strcpy (name, otherFile.name);
