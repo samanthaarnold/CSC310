@@ -1,8 +1,15 @@
 #include <iostream>
 #include <bitset>
+#include <fstream>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <utime.h>
 #include "file.h"
 
 using namespace std;
+
+void cf();
+bool direcCheck(string & file);
 
 int main(int argc, char **argv)
 {
@@ -14,14 +21,13 @@ int main(int argc, char **argv)
 
     //set boolean flags
     bitset<4>b;
+    string tarfile;
     for(int i=1; i<argc; i++)
     {
         if(strcmp(argv[i], "-cf")==0)
         {
             b.set(0);
-            string tarfile= argv[i+1];
-            cout<<"-cf"<<endl;
-            //break;
+            tarfile = argv[i+1];
         }
         else if(strcmp(argv[i], "-tf")==0)
         {
@@ -41,7 +47,7 @@ int main(int argc, char **argv)
         else if(b.none())
         {
             cout<<"Invalid option on the command line"<<endl;
-            break;
+            return 1;
         } 
     }
 
@@ -56,5 +62,39 @@ int main(int argc, char **argv)
         cout<<"Invalid format for"<< (b.test(2)? " -tf" : " -xf") <<endl;
         return 1;
     }
+
+    //-cf 
+    if(b.test(0))
+    {
+        //system("mkdir "+ tarfile);
+        string file;
+        for(int i=3; i<argc; i++)
+        {
+            file = argv[i];
+            if( !direcCheck(file) )
+            {
+                
+            }
+            else
+            {
+                //cout<<"directory"<<endl;
+                //f.flagAsDir();
+            }
+        }
+    }
+}
+
+//checks if directory
+bool direcCheck(string & file)
+{
+    struct stat buf;
+    lstat (file.c_str(), &buf);
+    bool d;
+    S_ISDIR(buf.st_mode)? d=true : d=false;
+    return d;
+}
+
+void cf()
+{
 
 }
