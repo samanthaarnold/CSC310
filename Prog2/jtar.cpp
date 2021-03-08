@@ -6,12 +6,14 @@
 #include <utime.h>
 #include "file.h"
 
-//test 
-
 using namespace std;
 
 void cf();
 bool direcCheck(string & file);
+string pmode(string & file);
+int fileSize(string & file);
+string timeStamp(string & file);
+
 
 int main(int argc, char **argv)
 {
@@ -94,6 +96,42 @@ bool direcCheck(string & file)
     bool d;
     S_ISDIR(buf.st_mode)? d=true : d=false;
     return d;
+}
+
+string pmode(string & file)
+{
+    string protection;
+    struct stat buf;
+    lstat (file.c_str(), &buf);
+    cout << ", protection = " << ((buf.st_mode & S_IRWXU) >> 6) << ((buf.st_mode & S_IRWXG) >> 3) << (buf.st_mode & S_IRWXO)<<endl;
+    protection += ((buf.st_mode & S_IRWXU) >> 6);
+    return protection;
+}
+
+int fileSize(string & file)
+{
+    struct stat buf;
+    lstat (file.c_str(), &buf);
+    cout << ", size = " << buf.st_size;
+    return buf.st_size;
+}
+
+string timeStamp(string & file) 
+{
+    struct stat buf;
+    lstat (file.c_str(), &buf);
+
+    char stamp[16];
+    strftime(stamp, 16, "%Y%m%d%H%M.%S", localtime(&buf.st_ctime));
+    
+    cout << ", timestamp = " << stamp << endl;
+    return stamp;
+    /*
+    timebuf.actime = buf.st_atime;
+    timebuf.modtime = buf.st_mtime;
+
+    utime (file.c_str(), &timebuf);
+    */
 }
 
 void cf()
