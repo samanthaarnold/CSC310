@@ -5,18 +5,20 @@
 #include <sys/types.h>
 #include <utime.h>
 #include "file.h"
+#include <filesystem> 
 
 using namespace std;
+//namespace fs = std::filesystem;
 
-void cf();
+void getFile();
 bool direcCheck(string & file);
-string pmode(string & file);
-int fileSize(string & file);
-string timeStamp(string & file);
-
+File getStats(string & file);
 
 int main(int argc, char **argv)
 {
+    string file1 = argv[1];
+    getStats(file1);
+    /*
     if(argc==1)
     {
         cout<<"Failure to specify one of the four options supported by jtar"<<endl;
@@ -70,22 +72,9 @@ int main(int argc, char **argv)
     //-cf 
     if(b.test(0))
     {
-        //system("mkdir "+ tarfile);
-        string file;
-        for(int i=3; i<argc; i++)
-        {
-            file = argv[i];
-            if( !direcCheck(file) )
-            {
-                
-            }
-            else
-            {
-                //cout<<"directory"<<endl;
-                //f.flagAsDir();
-            }
-        }
+        
     }
+    */
 }
 
 //checks if directory
@@ -98,43 +87,38 @@ bool direcCheck(string & file)
     return d;
 }
 
-string pmode(string & file)
-{
-    string protection;
-    struct stat buf;
-    lstat (file.c_str(), &buf);
-    cout << ", protection = " << ((buf.st_mode & S_IRWXU) >> 6) << ((buf.st_mode & S_IRWXG) >> 3) << (buf.st_mode & S_IRWXO)<<endl;
-    protection += ((buf.st_mode & S_IRWXU) >> 6);
-    return protection;
-}
-
-int fileSize(string & file)
+File getStats(string & file)
 {
     struct stat buf;
+    char name[81], pmode[5], size[7], stamp[16];
     lstat (file.c_str(), &buf);
-    cout << ", size = " << buf.st_size;
-    return buf.st_size;
-}
-
-string timeStamp(string & file) 
-{
-    struct stat buf;
-    lstat (file.c_str(), &buf);
-
-    char stamp[16];
-    strftime(stamp, 16, "%Y%m%d%H%M.%S", localtime(&buf.st_ctime));
     
-    cout << ", timestamp = " << stamp << endl;
-    return stamp;
-    /*
-    timebuf.actime = buf.st_atime;
-    timebuf.modtime = buf.st_mtime;
+    //name
+    
+    strcpy(name,file.c_str());
+    //cout<<"name= "<<name;
+    
+    //pmode
+    string protection;
+    //cout << ", protection = " << ((buf.st_mode & S_IRWXU) >> 6) << ((buf.st_mode & S_IRWXG) >> 3) << (buf.st_mode & S_IRWXO)<<endl;
+    protection += ((buf.st_mode & S_IRWXU) >> 6)+((buf.st_mode & S_IRWXG) >> 3)+(buf.st_mode & S_IRWXO);
+    strcpy(pmode,protection.c_str());
+    
+    //size
+    string fileSize = to_string(buf.st_size);
+    strcpy(size,fileSize.c_str());
+    //cout << ", size = " << buf.st_size;
+    
+    //stamp
+    strftime(stamp, 16, "%Y%m%d%H%M.%S", localtime(&buf.st_mtime));
+    //cout << ", timestamp = " << stamp << endl;
 
-    utime (file.c_str(), &timebuf);
-    */
+    File f(name,pmode,size,stamp);
+    return f;
 }
 
-void cf()
+void getFile(string & file)
 {
-
+    //for(auto p: recursive_directory_iterator(file))
+      //  cout << p.path() << '\n';
 }
