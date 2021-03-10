@@ -15,6 +15,7 @@ using recursive_directory_iterator = filesystem::recursive_directory_iterator;
 void cf(char **argv, string & tarfileName);
 File getStats(string & file);
 void tf(string & tarfileName);
+void xf(string & tarfileName);
 
 int main(int argc, char **argv)
 {
@@ -45,7 +46,6 @@ int main(int argc, char **argv)
         {
             b.set(2);
             tarfileName = argv[i+1];
-            cout<<"-xf"<<endl;
         }
         else if(strcmp(argv[i], "--help")==0)
         {
@@ -80,6 +80,11 @@ int main(int argc, char **argv)
     if(b.test(1))
     {
         tf(tarfileName);
+    }
+    //-xf
+    if(b.test(2))
+    {
+        xf(tarfileName);
     }
 
 }
@@ -123,11 +128,15 @@ File getStats(string & file)
 // stores them in a vector of file objects. From there, the number of files is 
 // written out to the tarfileName along with the name of all the files or directories.
 // If the file is a text file, then write out all the characters to the tarfileName. 
+
+//CHECK IF FILE OR DIRECTORY DOES NOT EXIST
 void cf(char **argv,string & tarfileName)
 {
     vector<File> pathways;
     string file = argv[3];
-        
+    
+    pathways.push_back(getStats(file));
+
     for(auto p: recursive_directory_iterator(file))
     {
         string name = p.path();
@@ -139,7 +148,6 @@ void cf(char **argv,string & tarfileName)
     //numner of files
     int totalFiles = pathways.size();
     tarfile.write( (char *) & totalFiles, sizeof(int) );
-    //cout<<totalFiles<<"size of "<<sizeof(int)<<endl;
     
     for(int i=0; i < pathways.size(); i++)
     {
@@ -163,11 +171,57 @@ void tf(string & tarfileName)
 {
     fstream tarfile (tarfileName.c_str(), ios::in | ios::binary);
     
-    char * totalFiles = new char[sizeof(int)];
-    tarfile.read(totalFiles, sizeof(int) );
-    //cout<<"total files= "<<totalFiles<<endl;
-
+    int totalFiles;
+    tarfile.read((char *) & totalFiles, sizeof(totalFiles) );
+    
+    int i=0;
+    File f;
+    while(i<totalFiles)
+    {
+        tarfile.read( (char *) & f, sizeof(f) );
+        cout<<f.getName()<<endl;
+        if(!f.isADir())
+            tarfile.seekg(stoi(f.getSize()),ios::cur);
+    
+        i++;
+    }
     tarfile.close();
 }
 
+//-xf specifies jtar to read tarfile and recreate all the files saved
 
+// CHECK IF DIRECTORY ALREADY EXISTS
+void xf(string & tarfileName)
+{
+    fstream tarfile (tarfileName.c_str(), ios::in | ios::binary);
+    
+    int totalFiles;
+    tarfile.read((char *) & totalFiles, sizeof(totalFiles) );
+    
+    int i=0;
+    File f;
+    while(i<totalFiles)
+    {
+        tarfile.read( (char *) & f, sizeof(f) );
+        //cout<<f.getName()<<endl;
+        if(f.isADir())
+        {
+            system(("mkdir "+f.getName()).c_str());
+        }
+        else if(!f.isADir())
+        {
+            fstream tempFile (f.getName().c_str(), ios::out);
+            char * token = new char[ stoi(f.getSize()) ];   //creating an array of chars that is size of file
+            tempFile.write(token, stoi(f.getSize()) );     //writing the entire file out at once
+            tempFile.close();
+        }
+
+        //changing protection mode
+        system( ("chmod "+f.getPmode()+" "+f.getName()).c_str() );
+        //changing access and modification time
+        system( ("touch -t "+f.getStamp()+" "+f.getName()).c_str() );
+        
+        i++;
+    }
+    tarfile.close();
+}
