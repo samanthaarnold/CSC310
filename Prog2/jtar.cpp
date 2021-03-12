@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <utime.h>
+#include <sstream>
 #include "file.h"
 #include <filesystem> 
 #include <cstdlib>
@@ -39,8 +40,6 @@ int main(int argc, char **argv)
         {
             b.set(1);
             tarfileName = argv[i+1];
-            //cout<<"-tf"<<endl;
-            //break;
         }
         else if(strcmp(argv[i], "-xf")==0)
         {
@@ -102,9 +101,9 @@ File getStats(string & file)
     strcpy(name,file.c_str());
     
     //pmode
-    string protection;
-    protection += ((buf.st_mode & S_IRWXU) >> 6)+((buf.st_mode & S_IRWXG) >> 3)+(buf.st_mode & S_IRWXO);
-    strcpy(pmode,protection.c_str());
+    stringstream protection;
+    protection << ((buf.st_mode & S_IRWXU) >> 6) << ((buf.st_mode & S_IRWXG) >> 3) << (buf.st_mode & S_IRWXO);
+    strcpy(pmode,protection.str().c_str());
     
     //size
     string fileSize = to_string(buf.st_size);
@@ -156,9 +155,18 @@ void cf(char **argv,string & tarfileName)
         if(!pathways[i].isADir())
         {
             fstream tempFile (pathways[i].getName().c_str(), ios::in);
-            char * token = new char[ stoi(pathways[i].getSize()) ]; //creating an array of chars that is size of file
-            tempFile.read(token, stoi(pathways[i].getSize()) );     //reading the entire file in at once
-            tarfile.write(token, stoi(pathways[i].getSize()) );     //writing data out to binary tar file
+            if(tempFile)
+            {
+                char * token = new char[ stoi(pathways[i].getSize()) ]; //creating an array of chars that is size of file
+                tempFile.read(token, stoi(pathways[i].getSize()) );     //reading the entire file in at once
+                tarfile.write(token, stoi(pathways[i].getSize()) );     //writing data out to binary tar file
+            } 
+            else
+            {
+                cout<<"File "<<pathways[i].getName()<<" does not exist"<<endl;
+                break;
+            }
+            
             tempFile.close();
         }   
     }
@@ -188,9 +196,14 @@ void tf(string & tarfileName)
     tarfile.close();
 }
 
-//-xf specifies jtar to read tarfile and recreate all the files saved
-
-// CHECK IF DIRECTORY ALREADY EXISTS
+//-xf reads in from tarfile and recreate all the files and directories. First line
+// has the number of files. Use this as the condition for a while loop.
+// Read in the file objects. If the object is a directory, use system
+// (mkdir+fileName) to make a new directory. If its not a directory,
+// create an array of chars that is size of file, and read in the characters
+// from the tar file, and write them out to a new file. Use system(chmod pmode
+// fileName) to update the protection mode and use system(touch -t timestamp 
+// fileName) so that the file has the same timestamp as when it was created.
 void xf(string & tarfileName)
 {
     fstream tarfile (tarfileName.c_str(), ios::in | ios::binary);
@@ -203,21 +216,34 @@ void xf(string & tarfileName)
     while(i<totalFiles)
     {
         tarfile.read( (char *) & f, sizeof(f) );
-        //cout<<f.getName()<<endl;
+        
         if(f.isADir())
         {
-            system(("mkdir "+f.getName()).c_str());
+            //checking to make sure directory does not already exist
+            fstream tempFile (f.getName().c_str(), ios::in);
+            if(!tempFile)
+            {
+                system(("mkdir "+f.getName()).c_str());
+            }
+            else
+            {
+                cout<<"Directory "<<f.getName()<<" already exits"<<endl;
+                tempFile.close();
+                break;
+            }
+            tempFile.close();
         }
-        else if(!f.isADir())
+        else 
         {
             fstream tempFile (f.getName().c_str(), ios::out);
             char * token = new char[ stoi(f.getSize()) ];   //creating an array of chars that is size of file
+            tarfile.read(token, stoi(f.getSize()) );
             tempFile.write(token, stoi(f.getSize()) );     //writing the entire file out at once
             tempFile.close();
         }
-
         //changing protection mode
         system( ("chmod "+f.getPmode()+" "+f.getName()).c_str() );
+        
         //changing access and modification time
         system( ("touch -t "+f.getStamp()+" "+f.getName()).c_str() );
         

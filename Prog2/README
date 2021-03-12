@@ -1,0 +1,44 @@
+File Class-
+    File (const File& otherFile);                   // deep copy constructor 
+    File (const char name[], const char pmode[],    //used to initialize file objects in jtar file. 
+        const char size[], const char stamp[]);     //Use after getting stats for the files and directories 
+                                                        for the tf option.
+    File ();                                        //default constructor, used in stat function
+    File & operator = (const File& otherFile);      //operator overloading with deep copy 
+    string getSize() const;	                        //returns the size of the file as a string
+    string getName() const; 	                    //returns the name of the file as a string
+    string getPmode() const;s	                    //returns the protection mode of the file as a string. 
+    string getStamp() const;	                    //returns the timestamp of the file as a string in the 
+                                                        form YrMonthDayHrMin.Sec 
+    int recordSize() const;
+    void flagAsDir();                               //marks it as a directory not a file
+    bool isADir() const;		                    //returns bool to determine if a file object is a directory
+
+   private :
+       char name[81], pmode[5], size[7], stamp[16]; //declaring size of variables. They are private so need 
+                                                    getter/setter function. Notice that none of them are strings 
+                                                    because they are going to be written out to a binary file. 
+                                                    Will be helpful when reading in stats and declaring file 
+                                                    objects for tf, but will also be helpful for uncompressing 
+                                                    tarfile since we know the size of the record
+       bool ADir;                                   //flag a file as directory
+
+Jtar-
+First, attack the-cf command. Create a getStat() function that gets called on each file a user is
+attempting to place in the tar file and return a file object. Use utility.cpp to help with determining the
+size, protection mode, timestamp. Use arguments on the command line to determine the files name.
+Also, set the bool value of ADir to true if the file is a directory. Once a getStat() function has been made,
+you can work on creating an function to build the tar file. Use a vector to store the all file objects from
+getStat(). The tar file is a binary file that includes the number of files contained in it at the start of the
+file. This will be followed by one or more binary objects of type File. If the File object represents a text
+file that contains characters in it, the File object will be followed by all the characters contained in that
+file. If the File object represents a directory, it will obviously not be followed by any text. Use the vector
+to write out to the binary tar file.
+
+For the -xf command, read in from the tarfile and recreates all the files and directories. First line has the
+number of files. Use this as the condition for a while loop. Next, read in the file objects. If the object is a
+directory, use system(mkdir+fileName) to make a new directory. If its not a directory create an array of
+chars that is size of file, and read in the characters from the tar file, and write them out to a new file.
+Use system(chmod pmode fileName) to update the protection mode and use system(touch -t timestamp
+fileName) so that the file has the same timestamp as when it was created.
+
