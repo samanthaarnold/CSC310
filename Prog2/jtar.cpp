@@ -13,7 +13,7 @@
 using namespace std;
 using recursive_directory_iterator = filesystem::recursive_directory_iterator;  
 
-void cf(char **argv, string & tarfileName);
+void cf(char **argv, int argc, string & tarfileName);
 File getStats(string & file);
 void tf(string & tarfileName);
 void xf(string & tarfileName);
@@ -69,11 +69,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
-
     //-cf 
     if(b.test(0))
     {
-        cf(argv, tarfileName);
+        cf(argv, argc, tarfileName);
     }
     //-tf
     if(b.test(1))
@@ -127,21 +126,32 @@ File getStats(string & file)
 // stores them in a vector of file objects. From there, the number of files is 
 // written out to the tarfileName along with the name of all the files or directories.
 // If the file is a text file, then write out all the characters to the tarfileName. 
-
-//CHECK IF FILE OR DIRECTORY DOES NOT EXIST
-void cf(char **argv,string & tarfileName)
+void cf(char **argv, int argc, string & tarfileName)
 {
     vector<File> pathways;
-    string file = argv[3];
     
-    pathways.push_back(getStats(file));
-
-    for(auto p: recursive_directory_iterator(file))
+    for(int i=3; i<argc; i++)
     {
-        string name = p.path();
-        pathways.push_back( getStats(name) );   
+        string file = argv[i];
+        File f = getStats(file);
+        //file on commandline
+        if(!f.isADir())
+        {
+            pathways.push_back(f);
+        }
+        //directory
+        else
+        {
+            pathways.push_back(f);
+            for(auto p: recursive_directory_iterator(file))
+            {
+                string name = p.path();
+                pathways.push_back( getStats(name) );  
+            }
+        }
     }
-
+    
+    //make tarfile
     fstream tarfile (tarfileName.c_str(), ios::out | ios::binary);
     
     //numner of files
