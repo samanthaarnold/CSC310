@@ -1,0 +1,305 @@
+Script started on Wed 31 Mar 2021 01:24:02 PM EDT
+]0;arnold_se@cobra:~/CSC310/Labs/Lab4[?1034h[arnold_se@cobra Lab4]$ cat mp3.cpp 
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <algorithm>
+#include <vector>
+#include<iomanip>
+using namespace std;
+
+class Song {
+public:
+  string title;
+  int time;
+  int track;      // Primary key
+  bool operator < (Song another) const { return title < another.title;} 
+}; 
+
+//print a song
+ostream & operator << (ostream& out, Song & l) {     
+        cout << l.track << ".  " << l.title << " " << l.time/60 << ":";
+        if ((l.time % 60) < 10) cout << "0";
+        cout << l.time % 60;
+        return out;
+}
+
+class Album {
+  public :
+    map<int, Song> songs;   //refernece song inside an album, int is track
+    string name;  // Album's name
+    string artist;
+    string genre;
+    int time;     // Total time of all songs on album
+    int nsongs;   // Total number of songs on album
+    bool operator < (Album another) const { return name < another.name;}
+};
+
+class Artist {
+   public :
+     string name; // Artist's name
+     int time;    // Total time of all songs on all albums by this artist
+     int nsongs;  // Total number of songs on all albums by this artist
+     vector<Album> albums;
+     bool operator < (Artist another) const { return name < another.name;}
+};
+
+string removechar(string & text);
+bool inArtist(vector<Artist> & a, string & tempArtist);
+bool inAlbums(vector<Artist> & a, string & tempAlbum);
+void printArtists(vector<Artist> & a);
+void printSongs(map<int, Song> & songs);
+void addSongs(vector<Artist> & a, string & tempAlbum, Song & s);
+void addAlbum(vector<Artist> & a, string & tempArtist, Album & alb);
+
+int main(int argc, char **argv)
+{
+    if(argc < 2)
+    {
+        cout<<"mp3: missing filename 'mp3'"<<endl;
+        return 1;
+    }
+
+    fstream infile(argv[1], ios::in);
+    vector<Artist> a;
+    
+    //read in file and store in temporary variable
+    string title;
+    while(infile >> title)
+    {
+        Artist art;
+        Album alb;
+        Song s;
+        
+        //title of song
+        s.title = removechar(title);
+
+        //converts time to seconds
+        string min, sec;
+        getline(infile,min,':');
+        getline(infile,sec,' ');
+        s.time = 60*stoi(min)+stoi(sec);
+        
+        //artist name
+        string artName;
+        infile >> artName;
+        artName = removechar(artName);
+
+        //album name
+        string albumName;
+        infile >> albumName;
+        albumName = removechar(albumName);
+
+        //genre
+        string genre;
+        infile >> genre;
+        
+        //track on album
+        string track;
+        infile >> track;
+        s.track = stoi(track);
+        
+        //checks if artist has been added to vector
+        if(!inArtist(a, artName) )
+        {
+            //initializes Artist object
+            art.name = artName; 
+            art.time = 0;
+            art.nsongs = 0;
+            //inserted in vector
+            a.push_back(art);
+        }
+
+        //adding new album to Artist
+        if(!inAlbums(a, albumName) && inArtist(a, artName))
+        {
+            //initializes Album object
+            alb.songs[s.track] = s;
+            alb.name = albumName;
+            alb.artist = artName;
+            alb.genre = genre;
+            alb.time = s.time;
+            alb.nsongs = 1;
+            //album added to Artist Object and artist information updated
+            addAlbum(a, artName, alb);
+        }
+
+        //add song to album
+        else
+        {
+            addSongs(a, albumName, s);
+        }
+    }
+
+    //sort vector of Artist objects using operator overlaoding
+    sort(a.begin(), a.end());
+    
+    //print everything
+    printArtists(a);
+    cout<<endl;
+
+    infile.close();
+    return 0;
+}
+
+//uses iterator to check if an artist is already stored in the vector
+bool inArtist(vector<Artist> & a, string & tempArtist)
+{
+    bool result = false;
+    vector<Artist> :: iterator itr;
+    for (itr = a.begin(); itr != a.end(); ++itr)
+    {
+        if(itr->name == tempArtist)
+        {
+            result = true;
+        } 
+    }
+    return result;
+}
+
+//assuming the artist is already in the vector, checks using 2 iterators
+//to see if album is already in an Artist object
+bool inAlbums(vector<Artist> & a, string & tempAlbum)
+{
+    bool result = false;
+    vector<Artist> :: iterator itr;
+    vector<Album> :: iterator itr2;
+    //Artist iterator
+    for (itr = a.begin(); itr != a.end(); ++itr)
+    {
+        //Album iterator
+        for(itr2 = itr->albums.begin(); itr2 != itr->albums.end(); itr2++)
+        {
+            if(itr2->name == tempAlbum)
+            {
+                result = true;
+            } 
+        }
+    } 
+    return result;
+}
+
+//removes _ from strings from text file
+string removechar(string & text)
+{
+  replace(text.begin(), text.end(), '_', ' ');
+  return text;
+}
+
+//given that the artist and album has already been saved, this function
+//goes through the vector storing Artist objects and finds where the artist is located.
+//Then, it goes through the vector storing Album objects, and adds the song to the Album
+//object. Updates number of songs in the album and artist, and updates total time of album a
+//and artist.
+void addSongs(vector<Artist> & a, string & tempAlbum, Song & s)
+{
+    vector<Artist> :: iterator itr;
+    vector<Album> :: iterator itr2;
+    //going through vector of Artists
+    for (itr = a.begin(); itr != a.end(); ++itr)
+    {
+        //going through vector of Albums
+        for(itr2 = itr->albums.begin(); itr2 != itr->albums.end(); itr2++)
+        {
+            if(itr2->name == tempAlbum)
+            {
+                //updating album information
+                itr2->songs[s.track] = s;
+                itr2->time += s.time;
+                itr2->nsongs += 1;
+                //updating total time and number of songs for Artist 
+                itr->time += s.time;
+                itr->nsongs += 1;
+            } 
+        }
+    } 
+}
+
+//used when a new album has been read in from text file. Goes through
+//vector of Artist objects and adds the new album to vector of Albums 
+//within Artist object. Sorts Album vector in alphabetical order
+//using operator overloading 
+void addAlbum(vector<Artist> & a, string & tempArtist, Album & alb)
+{
+    vector<Artist> :: iterator itr;
+    for (itr = a.begin(); itr != a.end(); ++itr)
+    {
+        if(itr->name == tempArtist)
+        {
+            //adding new Album oject to vector
+            itr->albums.push_back(alb);
+            //updating total songs and time for Artist
+            itr->nsongs += 1;
+            itr->time += alb.time;
+            //sorts Album vector
+            sort(itr->albums.begin(), itr->albums.end());
+        }
+    } 
+}
+
+//prints sorted vector of Artists obejcts to screen
+void printArtists(vector<Artist> & a)
+{
+    vector<Artist> :: iterator itr;
+    vector<Album> :: iterator itr2;
+    //looping through artist vector 
+    for (itr = a.begin(); itr != a.end(); ++itr)
+    {
+        //converts time from seconds to minutes and seconds
+        cout<<itr->name<<": "<<itr->nsongs<<", "<<(itr->time)/60<<":";
+        if (itr->time % 60 < 10) cout << "0";
+        cout<<(itr->time) % 60<<endl;
+        
+        //loops through sorted albums
+        for(itr2 = itr->albums.begin(); itr2 != itr->albums.end(); itr2++)
+        {
+            //converts time from seconds to minutes and seconds
+            cout<<"\t"<<itr2->name<<": "<<itr2->nsongs<<", "<<(itr2->time)/60<<":";
+            if(itr2->time % 60 < 10) cout<< "0";
+            cout<<(itr2->time) % 60<<endl;
+            //prints songs in Album
+            printSongs(itr2->songs);
+        }
+    }
+}
+
+//uses operator overloading to print a song object
+void printSongs(map<int, Song> & songs)
+{
+    map<int,Song> :: iterator itr;
+    for (itr = songs.begin(); itr != songs.end(); ++itr)
+    {
+        Song temp = itr->second;
+        cout<<"\t\t"<<temp<<endl;
+    }
+}]0;arnold_se@cobra:~/CSC310/Labs/Lab4[arnold_se@cobra Lab4]$ make
+c++ mp3.cpp 
+]0;arnold_se@cobra:~/CSC310/Labs/Lab4[arnold_se@cobra Lab4]$ mp3 
+mp3: missing filename 'mp3' 
+]0;arnold_se@cobra:~/CSC310/Labs/Lab4[arnold_se@cobra Lab4]$ mp3 music.txt 
+Coltrane, John: 4, 18:37
+        Giant Steps: 4, 18:37
+                1.  Giant Steps 4:46
+                3.  Countdown 2:25
+                6.  Naima 4:24
+                7.  Mr. P.C. 7:02
+Lyle, Bobby: 1, 5:16
+        Night Breeze: 1, 5:16
+                5.  Naima 5:16
+Puente, Tito: 1, 4:02
+        El Rey: 1, 4:02
+                5.  Giant Steps 4:02
+Tjader, Cal: 1, 5:36
+        A Fuego Vivo: 1, 5:36
+                6.  Naima 5:36
+Walton, Cedar: 4, 30:44
+        Eastern Rebellion: 1, 8:38
+                2.  Naima 8:38
+        Naima: 3, 22:06
+                2.  This Guy's In Love With You 8:10
+                4.  Down In Brazil 6:07
+                6.  Naima 7:49
+]0;arnold_se@cobra:~/CSC310/Labs/Lab4[arnold_se@cobra Lab4]$ ext[Kit
+exit
+
+Script done on Wed 31 Mar 2021 01:24:50 PM EDT

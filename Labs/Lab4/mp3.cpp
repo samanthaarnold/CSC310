@@ -3,7 +3,7 @@
 #include <map>
 #include <algorithm>
 #include <vector>
-#include <set>
+#include<iomanip>
 using namespace std;
 
 class Song {
@@ -11,14 +11,14 @@ public:
   string title;
   int time;
   int track;      // Primary key
-  bool operator < (Song another) const { return title < another.title;} //if(s < s1)
+  bool operator < (Song another) const { return title < another.title;} 
 }; 
 
 //print a song
 ostream & operator << (ostream& out, Song & l) {     
-        cout << l.track << ".  " << l.title << " " << l.time/100 << ":";
-        if ((l.time % 100) < 10) cout << "0";
-        cout << l.time % 100;
+        cout << l.track << ".  " << l.title << " " << l.time/60 << ":";
+        if ((l.time % 60) < 10) cout << "0";
+        cout << l.time % 60;
         return out;
 }
 
@@ -30,6 +30,7 @@ class Album {
     string genre;
     int time;     // Total time of all songs on album
     int nsongs;   // Total number of songs on album
+    bool operator < (Album another) const { return name < another.name;}
 };
 
 class Artist {
@@ -37,103 +38,236 @@ class Artist {
      string name; // Artist's name
      int time;    // Total time of all songs on all albums by this artist
      int nsongs;  // Total number of songs on all albums by this artist
+     vector<Album> albums;
      bool operator < (Artist another) const { return name < another.name;}
 };
 
-Artist updateArtist(vector<Artist> & artists, string & artist);
 string removechar(string & text);
-bool AlbumInMMap(multimap<Artist,Album> & mmap, string & tempAlbum);
-
-typedef multimap<Artist,Album>::value_type val;
+bool inArtist(vector<Artist> & a, string & tempArtist);
+bool inAlbums(vector<Artist> & a, string & tempAlbum);
+void printArtists(vector<Artist> & a);
+void printSongs(map<int, Song> & songs);
+void addSongs(vector<Artist> & a, string & tempAlbum, Song & s);
+void addAlbum(vector<Artist> & a, string & tempArtist, Album & alb);
 
 int main(int argc, char **argv)
 {
-  //read in music text file
-  fstream infile(argv[1], ios::in);
-  
-  //declare multimap<Artist, Album>
-  multimap<Artist,Album> mmap;
-
-  Song s; 
-  Album alb;
-  Artist a; 
- 
- string title;
-  while(infile >> title)
-  {
-    cout<<removechar(title)<<" ";
-   
-    //time
-    string min, sec;
-    getline(infile,min,':');
-    getline(infile,sec,' ');
-    //infile >> sec;
-    string time = min + sec;
-    s.time += stoi(time);
-    cout<<s.time<<" ";
-    
-    //artist
-    string artName;
-    infile >> artName;
-    //a.name = removechar(artName);
-    cout<<a.name<<" ";
-
-    //album
-    string albumName;
-    infile >> albumName;
-    cout<<removechar(albumName)<<" ";
-    
-
-    //genre
-    string genre;
-    infile >> genre;
-    cout<<genre<<" ";
-    
-    //track
-    infile >> s.track;
-    cout<<s.track<<endl;
-    
-    /*
-    
-    //update Album object with new song, time, and nsong
-    alb.songs[s.track] = s;
-    alb.name = removechar(albumName);
-    alb.artist = removechar(artName);
-    alb.genre = genre;
-    alb.time += stoi(time);
-    alb.nsongs += 1;
-   
-    //update Artist object with time and nsong
-    
-
-    //add Album to multimap
-    if(!AlbumInMMap(mmap, albumName))
+    if(argc < 2)
     {
-
-      mmap.insert(val(a,alb));
+        cout<<"mp3: missing filename 'mp3'"<<endl;
+        return 1;
     }
-    */
-  }
-  infile.close();
- 
+
+    fstream infile(argv[1], ios::in);
+    vector<Artist> a;
+    
+    //read in file and store in temporary variable
+    string title;
+    while(infile >> title)
+    {
+        Artist art;
+        Album alb;
+        Song s;
+        
+        //title of song
+        s.title = removechar(title);
+
+        //converts time to seconds
+        string min, sec;
+        getline(infile,min,':');
+        getline(infile,sec,' ');
+        s.time = 60*stoi(min)+stoi(sec);
+        
+        //artist name
+        string artName;
+        infile >> artName;
+        artName = removechar(artName);
+
+        //album name
+        string albumName;
+        infile >> albumName;
+        albumName = removechar(albumName);
+
+        //genre
+        string genre;
+        infile >> genre;
+        
+        //track on album
+        string track;
+        infile >> track;
+        s.track = stoi(track);
+        
+        //checks if artist has been added to vector
+        if(!inArtist(a, artName) )
+        {
+            //initializes Artist object
+            art.name = artName; 
+            art.time = 0;
+            art.nsongs = 0;
+            //inserted in vector
+            a.push_back(art);
+        }
+
+        //adding new album to Artist
+        if(!inAlbums(a, albumName) && inArtist(a, artName))
+        {
+            //initializes Album object
+            alb.songs[s.track] = s;
+            alb.name = albumName;
+            alb.artist = artName;
+            alb.genre = genre;
+            alb.time = s.time;
+            alb.nsongs = 1;
+            //album added to Artist Object and artist information updated
+            addAlbum(a, artName, alb);
+        }
+
+        //add song to album
+        else
+        {
+            addSongs(a, albumName, s);
+        }
+    }
+
+    //sort vector of Artist objects using operator overlaoding
+    sort(a.begin(), a.end());
+    
+    //print everything
+    printArtists(a);
+    cout<<endl;
+
+    infile.close();
+    return 0;
 }
 
-bool AlbumInMMap(multimap<Artist,Album> & mmap, string & tempAlbum)
+//uses iterator to check if an artist is already stored in the vector
+bool inArtist(vector<Artist> & a, string & tempArtist)
 {
-  multimap<Artist,Album> :: iterator itr;
-  for (itr = mmap.begin(); itr != mmap.end(); ++itr)
-  {
-    if(itr->second.name == tempAlbum)
+    bool result = false;
+    vector<Artist> :: iterator itr;
+    for (itr = a.begin(); itr != a.end(); ++itr)
     {
-      return true;
+        if(itr->name == tempArtist)
+        {
+            result = true;
+        } 
     }
-  }
-  //not in mmap
-  return false;
+    return result;
 }
 
+//assuming the artist is already in the vector, checks using 2 iterators
+//to see if album is already in an Artist object
+bool inAlbums(vector<Artist> & a, string & tempAlbum)
+{
+    bool result = false;
+    vector<Artist> :: iterator itr;
+    vector<Album> :: iterator itr2;
+    //Artist iterator
+    for (itr = a.begin(); itr != a.end(); ++itr)
+    {
+        //Album iterator
+        for(itr2 = itr->albums.begin(); itr2 != itr->albums.end(); itr2++)
+        {
+            if(itr2->name == tempAlbum)
+            {
+                result = true;
+            } 
+        }
+    } 
+    return result;
+}
+
+//removes _ from strings from text file
 string removechar(string & text)
 {
   replace(text.begin(), text.end(), '_', ' ');
   return text;
+}
+
+//given that the artist and album has already been saved, this function
+//goes through the vector storing Artist objects and finds where the artist is located.
+//Then, it goes through the vector storing Album objects, and adds the song to the Album
+//object. Updates number of songs in the album and artist, and updates total time of album a
+//and artist.
+void addSongs(vector<Artist> & a, string & tempAlbum, Song & s)
+{
+    vector<Artist> :: iterator itr;
+    vector<Album> :: iterator itr2;
+    //going through vector of Artists
+    for (itr = a.begin(); itr != a.end(); ++itr)
+    {
+        //going through vector of Albums
+        for(itr2 = itr->albums.begin(); itr2 != itr->albums.end(); itr2++)
+        {
+            if(itr2->name == tempAlbum)
+            {
+                //updating album information
+                itr2->songs[s.track] = s;
+                itr2->time += s.time;
+                itr2->nsongs += 1;
+                //updating total time and number of songs for Artist 
+                itr->time += s.time;
+                itr->nsongs += 1;
+            } 
+        }
+    } 
+}
+
+//used when a new album has been read in from text file. Goes through
+//vector of Artist objects and adds the new album to vector of Albums 
+//within Artist object. Sorts Album vector in alphabetical order
+//using operator overloading 
+void addAlbum(vector<Artist> & a, string & tempArtist, Album & alb)
+{
+    vector<Artist> :: iterator itr;
+    for (itr = a.begin(); itr != a.end(); ++itr)
+    {
+        if(itr->name == tempArtist)
+        {
+            //adding new Album oject to vector
+            itr->albums.push_back(alb);
+            //updating total songs and time for Artist
+            itr->nsongs += 1;
+            itr->time += alb.time;
+            //sorts Album vector
+            sort(itr->albums.begin(), itr->albums.end());
+        }
+    } 
+}
+
+//prints sorted vector of Artists obejcts to screen
+void printArtists(vector<Artist> & a)
+{
+    vector<Artist> :: iterator itr;
+    vector<Album> :: iterator itr2;
+    //looping through artist vector 
+    for (itr = a.begin(); itr != a.end(); ++itr)
+    {
+        //converts time from seconds to minutes and seconds
+        cout<<itr->name<<": "<<itr->nsongs<<", "<<(itr->time)/60<<":";
+        if (itr->time % 60 < 10) cout << "0";
+        cout<<(itr->time) % 60<<endl;
+        
+        //loops through sorted albums
+        for(itr2 = itr->albums.begin(); itr2 != itr->albums.end(); itr2++)
+        {
+            //converts time from seconds to minutes and seconds
+            cout<<"\t"<<itr2->name<<": "<<itr2->nsongs<<", "<<(itr2->time)/60<<":";
+            if(itr2->time % 60 < 10) cout<< "0";
+            cout<<(itr2->time) % 60<<endl;
+            //prints songs in Album
+            printSongs(itr2->songs);
+        }
+    }
+}
+
+//uses operator overloading to print a song object
+void printSongs(map<int, Song> & songs)
+{
+    map<int,Song> :: iterator itr;
+    for (itr = songs.begin(); itr != songs.end(); ++itr)
+    {
+        Song temp = itr->second;
+        cout<<"\t\t"<<temp<<endl;
+    }
 }
