@@ -41,13 +41,15 @@ bool operator < (const Album& a, const Album& b)
     return a.UPC < b.UPC;
 }  
 
-//
 istream & operator >> (istream & stream, Album & C)
 {
-    return stream >> C.UPC >> C.Artist >> C.Title;
+    stream.getline(C.UPC,50);
+    stream.getline(C.Artist,50);
+    stream.getline(C.Title,50);
+
+    return stream;
 }
 
-//
 ostream & operator << (ostream & stream, Album & C)
 {
     cout<<C.UPC<<" "<<C.Artist<<" "<<C.Title<<endl;

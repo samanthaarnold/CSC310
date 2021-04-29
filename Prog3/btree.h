@@ -1,4 +1,3 @@
-
 #include <vector>
 #include <set>
 #include <iostream>
@@ -20,8 +19,8 @@ typedef keyType ValueArray[ORDER-1];
 struct BTNode
 {
         int currSize;
-        ValueArray contents;
-        IndexArray child;
+        ValueArray contents;	//array made up of Album objects
+        IndexArray child; 	//links
 }; 
 
 struct Pair
@@ -52,7 +51,7 @@ class BTree
 
  private:
 	BTNode root;
-        int rootAddr;
+    int rootAddr;
 	char treeFileName[80];
 	fstream treeFile;
 	int height;

@@ -1,0 +1,95 @@
+README-
+
+BTree:: BTree()
+    default constructor
+
+void BTree::writeHeader (char * fileName)
+    reads the file name from the command line, opens fstream buffer in input/output mode
+
+void BTree:: insert (keyType key)
+    public function that calls private insert function
+void BTree:: insert (keyType key, int recAddr, int oneAddr, int twoAddr)
+    Always insert key into a leaf node. Start at the root and traverse down until you 
+    reach a leaf node. Once you reach a leaf node, insert the key. Need to make sure
+    that the leaf node has space to insert key. Call split() function if node is full.
+
+void BTree:: reset (char * filename)
+    opens new file to create a b-tree
+
+void BTree::close ()
+    closes fstream FileName with FileName.close()
+
+void BTree:: printTree()
+    calls private printTree() function
+void BTree:: printTree (int rootAddr)
+    private function, prints tree in preorder traversal (root, left, right). Given in class
+
+void BTree:: inorder()
+    public function, calls private function inorder
+void BTree:: inorder (int rootAddr)
+    private function, prints the tree in inorder traversal (left, root, right)
+
+void BTree:: reverse()
+    public function, calls private function reverse
+void BTree:: reverse (int rootAddr)
+    private function, prints the tree in postorder traversal (left, right, root)
+	
+int BTree:: getHeight()
+    returns the height of the b-tree, update height value in insert function
+
+bool BTree:: search (string key)
+    public function, calls the private search function
+bool BTree:: search (string key, BTNode t, int tAddr)
+    private function. Start at the root recursively traverse down. For every
+    visited internal node, if the node has the key, return true. 
+    Otherwise, continue to recursively traverse down. If no leaf node is found,
+    return false.
+	
+keyType BTree:: retrieve (string key)
+    retrieves the UPC value from the b-tree. will work similar to the search function,
+    but will return a keyType instead. 
+
+void BTree:: totalio() const
+    counts the total times program seeks disk, sum of read and write
+
+int BTree:: countLeaves()
+    calls private function countLeaves()
+int BTree:: countLeaves(int recAddr)
+    private function, counts the number of leaves in every node. Uses recursions, assume
+    -1 represents a null leaf. 
+
+int BTree:: findAddr (keyType key, BTNode t, int tAddr)
+    private function, returns the address on disc of current node. search the b-tree starting at 
+    the root comparing by UPC. 
+
+int BTree:: findpAddr(keyType key, BTNode t, int tAddr)
+    private function, returns the address on disc of the parent of the current node.
+
+BTNode BTree:: getNode (int recAddr)
+    private function, goes to location on disc, and returns struct BTNode. This will tell you the 
+    size of the node, links or children connected to that node, and album obejcts stored at that node.
+
+void BTree:: printNode(int recAddr)
+    private function. Given the address of the node, prints the size of the node 
+    and its contents. Uses recursion. Given in class
+
+void BTree:: placeNode (keyType k,int recAddr,int oneAddr,int twoAddr)
+    private function, moves node to specificed address. 
+
+bool BTree:: isLeaf (int recAddr)
+    private function, returns true if node is a leaf. Given the record address,
+    returns true if the first element in child array is equal to -1.
+
+bool BTree:: isLeaf(BTNode t)
+    private function, returns true if node is a leaf. Checks if first element in child
+    array is equal to -1. 
+
+void BTree:: adjRoot (keyType rootElem, int oneAddr, int twoAddr)
+    private function. called when the root node is full and needs to be split. Since the root
+    has no parent address, you need to create a new node. Increase height of tree by 1. 
+      
+void BTree:: splitNode (keyType& key,int recAddr,int& oneAddr,int& twoAddr)
+    private function. will be called when a node is full during insertion. First, find the 
+    median in ValueArray, and promote it to its parent node. Call findpAddr(). oneAddr and twoAddr
+    are the two new links to connect the 2 new nodes cretaed to the parent. Increase height of 
+    tree by 1. 
