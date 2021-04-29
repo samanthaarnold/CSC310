@@ -119,20 +119,29 @@ int hashMe (string key, int maxAddresses)
 {
 	// Post:  Folds string key into an integer and returns it
 	
-	//make copy
 	string copy = key;
+	int sum;
 	
-	for(int i=0; i<copy.size(); i++)
+	//make copy of string with all uppercase letters
+	for(int i=0; i<key.length(); i++)
 	{
-		int copy_ascii = int(copy[i]);
-		//lowercase letters
-		if(copy_ascii>95)
-		{
-			copy_ascii -=32;
-		}
-		
-
+		if(isalpha(key[i]))
+			copy +=toupper(key[i]);
 	}
+	//adds Z to end if the lenght is odd, making lenght now an even number
+	if(copy.length() % 2 == 1)
+		copy += 'Z';
+	//fold and add string with two number pairs. Number should represent ascii value
+	for(int i=0; i<copy.length(); i+=2)
+	{
+		int temp=0;
+		temp += int(copy[i])*100;
+		temp += int(copy[i+1]);
+		sum += temp;
+	}
+	//remainder of divinding by prime number, increases the variability amoung hashed values
+	sum % 36373;
+	return sum % maxAddresses;
 	
 
 }
@@ -145,14 +154,26 @@ int hashSearch (string key, Bucket mybucks[])
 
 
         // Find the location your key hashes to in your array by calling hashMe.  Print out that location.
-
-
-        
+		int slot = hashMe(key, 300);
+		cout<<"slot = "<<slot<<endl;
+		
         // Use a while loop that continues until it finds key.  Return number of checks to find.
         // Otherwise, return a -1.
-        
-
-
+		int i=0; int checks = 1;
+		while( (strcmp(mybucks[slot].key[i],"///") != 0) )
+		{
+			if( (strcmp(mybucks[slot].key[i],key.c_str() ) == 0) )
+				return checks;
+			i++; checks++;
+			if(i == 3)
+			{
+				i=0;
+				slot++;
+				if(slot > 299)
+					slot = 0;
+			}
+		}
+		return -1;
 }
  
 void printBuckets(Bucket mybucks[])
@@ -160,8 +181,15 @@ void printBuckets(Bucket mybucks[])
 	// Pre:  Our array of 300 buckets size 3 has been initialized
 	// Post:  Our array is printed out on 300 lines, with the 3 keys inside each bucket per line
 
-
-
-
+	for(int i=0; i<300; i++)
+	{
+		cout<<"i = "<<i;
+		cout<<" size = "<<mybucks[i].currSize<<" ";
+		for(int j=0; j<3; j++)
+		{
+			cout<<mybucks[i].key[j]<<" ";
+		}
+		cout<<endl;
+	}
 	
 }

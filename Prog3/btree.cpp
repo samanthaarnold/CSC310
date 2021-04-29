@@ -3,7 +3,7 @@
 //default constructor
 BTree:: BTree()
 {
-
+    height=0; read=0; write=0;
 }
 
 //prints to screen at the beginning of the program
@@ -58,17 +58,17 @@ void BTree:: inorder()
     inorder(rootAddr);
 }
 //private function, prints the tree in inorder traversal (left, root, right)
+//prints in accending order
 void BTree:: inorder (int rootAddr)
 {
-    /*
-    if(rootAddr != -1)
+    BTNode dummy = getNode(rootAddr);
+    for(int i=0; i<=dummy.currSize; i++)
     {
-        BTNode dummy = getNode(rootAddr);
-        printNode(rootAddr);
-        for(int i=0; i<=dummy.currSize; i++)
-            printTree(dummy.child[i]);
+        if(dummy.child[i] != -1)
+            inorder(dummy.child[i]);
+        cout<<dummy.contents[i]<<endl;
     }
-    */
+    inorder(dummy.child[dummy.currSize]);
 }
 
 //public function, calls private reverse function
@@ -76,10 +76,18 @@ void BTree:: reverse()
 {
 
 }
-//private function,
+//private function, prints tree in reverse order
+//prints in decending order
 void BTree:: reverse (int rootAddr)
 {
-
+    BTNode dummy = getNode(rootAddr);
+    reverse(dummy.child[dummy.currSize]);
+    for(int i=dummy.currSize-1; i>=0; i--)
+    {
+        cout<<dummy.contents[i]<<endl;
+        if(dummy.child[i] != -1)
+            reverse(dummy.child[i]);
+    }
 }
 	
 int BTree:: getHeight()
