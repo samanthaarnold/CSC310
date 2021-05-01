@@ -18,9 +18,9 @@ typedef keyType ValueArray[ORDER-1];
 
 struct BTNode
 {
-        int currSize;
-        ValueArray contents;	//array made up of Album objects
-        IndexArray child; 	//links
+        int currSize;			//number of elements in content
+        ValueArray contents;	//array made up of keys from Album
+        IndexArray child; 		//links or children
 }; 
 
 struct Pair
@@ -62,7 +62,7 @@ class BTree
 	int write;
 
 	int findAddr (keyType key, BTNode t, int tAddr);
-	int findpAddr(keyType key, BTNode t, int tAddr);
+	int findpAddr(keyType key, BTNode t, int tAddr, int findAddr);
 	void insert (keyType key, int recAddr, int oneAddr, int twoAddr);
         BTNode getNode (int recAddr);
 	void printNode(int recAddr);

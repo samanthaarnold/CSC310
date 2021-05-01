@@ -39,7 +39,14 @@ Album & Album::operator = (const Album& otherAlbum)
 bool operator < (const Album& a, const Album& b)
 {
     return a.UPC < b.UPC;
-}  
+} 
+
+bool operator == (const Album & a, const Album & b)
+{
+    if(a.UPC == b.UPC)
+        return true;
+    return false;
+}
 
 istream & operator >> (istream & stream, Album & C)
 {

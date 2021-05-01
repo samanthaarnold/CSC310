@@ -43,6 +43,9 @@ int main()
              << hashSearch("Oakdale", mybucks) << endl;
 	cout << "hashSearch(\"Whigham\") = "
              << hashSearch("Whigham", mybucks) << endl;
+	cout << "hashSearch(\"Whigham\") = "
+             << hashSearch("Whigham", mybucks) << endl;
+			 		 
 
         return 0;
 }
