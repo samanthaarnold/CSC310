@@ -14,16 +14,17 @@ void BTree:: writeHeader (char * fileName)
     BTNode dummy;
     treeFile.read((char *) & dummy, sizeof(BTNode));
     rootAddr = dummy.child[0];
+    read++;
 }
 
 //public function, calls the private function insert
 void BTree:: insert (keyType key)
 {
-    //insert(key, rootAddr, oneAddr, twoAddr);
+    insert(key, rootAddr);
 }
 //private function, inserts keyType 
 // key is value inseting, recAddr is addess of current node 
-void BTree:: insert (keyType key, int recAddr, int oneAddr, int twoAddr)
+void BTree:: insert (keyType key, int recAddr)
 {
     BTNode dummy = getNode(recAddr);
     
@@ -34,13 +35,13 @@ void BTree:: insert (keyType key, int recAddr, int oneAddr, int twoAddr)
         {
             if(key<dummy.contents[i])
             {
-                insert(key,dummy.child[i], oneAddr, twoAddr);
+                insert(key,dummy.child[i]);
             }
         }
-        insert(key,dummy.child[dummy.currSize], oneAddr, twoAddr);
+        insert(key,dummy.child[dummy.currSize]);
     }
     //node is a leaf, and node is not full
-    else if(isLeaf(recAddr) && dummy.currSize < 4 )
+    else if( isLeaf(recAddr) && dummy.currSize < 4 )
     {
         int i;
         //finding correcting location to insert key to node
@@ -55,11 +56,13 @@ void BTree:: insert (keyType key, int recAddr, int oneAddr, int twoAddr)
         //write back out to file
         treeFile.seekg(recAddr,ios::beg);
         treeFile.write((char *) & dummy, sizeof(BTNode));
+        write++;
     }
     //node is full, must split
     else
     {
-        splitNode(key, recAddr, oneAddr, twoAddr);
+        splitNode(key, recAddr, -1, -1);
+        cout<<"Now splitting "<<endl;
     }
 }
 
@@ -141,7 +144,7 @@ int BTree:: getHeight()
 
 bool BTree:: search (string key)
 {
-    search(key, root, rootAddr);
+    return search(key, root, rootAddr);
 }
 //private function. Loop through nodes, compare content to key and return true 
 //if found. if key is smaller, go to child. If child is leaf, return -1
@@ -160,11 +163,13 @@ bool BTree:: search (string key, BTNode t, int tAddr)
     else
         return search(key, t, tAddr);
 }
-	
+
+/*	
 keyType BTree:: retrieve (string key)
 {
 
 }
+*/
 
 //totals the amount of times gone out to disk
 void BTree:: totalio() const
@@ -175,7 +180,7 @@ void BTree:: totalio() const
 
 int BTree:: countLeaves()
 {
-    countLeaves(rootAddr);
+    return countLeaves(rootAddr);
 }
 //private function, counts the number of leaves in every node. Uses recursions, assume
 // -1 represents a null leaf
@@ -202,12 +207,12 @@ int BTree:: findAddr (keyType key, BTNode t, int tAddr)
             return tAddr;
 
         else if(key < t.contents[i] && !isLeaf(t))
-            findAddr(key, t, tAddr);
+            return findAddr(key, getNode(t.child[i]), t.child[i]);
     }
     if(isLeaf(t))
         return tAddr;
     else
-        return findAddr(key, t, tAddr);
+        return findAddr(key, getNode(t.child[t.currSize]), t.child[t.currSize]);
 
 }
 
@@ -254,12 +259,6 @@ void BTree:: printNode(int recAddr)
 }
 
 //private
-void BTree:: placeNode (keyType k,int recAddr,int oneAddr,int twoAddr)
-{
-
-}
-
-//private
 bool BTree:: isLeaf (int recAddr)
 {
     BTNode dummy = getNode(recAddr);
@@ -281,7 +280,97 @@ void BTree:: adjRoot (keyType rootElem, int oneAddr, int twoAddr)
 }
 
 //private function. When first called, you are at a leaf node  
-void BTree:: splitNode (keyType& key,int recAddr,int& oneAddr,int& twoAddr)
+void BTree:: splitNode (keyType& key,int recAddr, int leftAddr, int rightAddr)
 {
+    BTNode leftChild = getNode(recAddr);
+    BTNode parent = getNode(findpAddr(key, root, rootAddr, recAddr));
+    
+    //Case 1: leaf is full, and parent is not full
+    if(parent.currSize < 4)
+    {
+        if(key < leftChild.contents[3])
+        {
+            keyType temp = leftChild.contents[3];
+            leftChild.contents[3] = key;
+            key = temp;
+            int tempAddr = leftChild.child[4];
+            leftChild.child[4] = rightAddr;
+            rightAddr = tempAddr;
 
+            int i;
+            //finding correcting location to insert key to node
+            for(i=leftChild.currSize-1; (i>=0 && key < leftChild.contents[i]); i--)
+            {
+                leftChild.contents[i+1] = leftChild.contents[i];
+                leftChild.contents[i+2] = leftChild.contents[i+1];
+            }
+        }
+        
+        //splitting leftchild contents
+        leftChild.currSize = 2;
+
+        //adding content to right child, and updating the children 
+        BTNode rightChild;
+        rightChild.currSize=2;
+        rightChild.contents[0] = leftChild.contents[3];
+        rightChild.contents[1] = key;
+        rightChild.child[0] = leftChild.child[3];
+        rightChild.child[1] = leftChild.child[4];
+        rightChild.child[2] = rightAddr;
+
+        treeFile.seekp(recAddr, ios::beg);
+        treeFile.write((char *) & leftChild, sizeof(BTNode));
+
+        treeFile.seekp(0,ios::end);
+        int rightAddress = treeFile.tellp();
+        treeFile.write((char *) & rightChild, sizeof(BTNode));
+        
+        //promoting child in position 2 to parent
+        placeNode(leftChild.contents[2], findpAddr(key, root, rootAddr, recAddr), recAddr, rightAddress);
+    }
+}
+
+//promote median value to parent node
+void BTree:: placeNode (keyType key,int pAddr,int leftAddr,int rightAddr)
+{
+    BTNode parent = getNode(pAddr);
+    BTNode left = getNode(leftAddr);
+    BTNode right = getNode(rightAddr);
+
+    //case if root is full, need to create new node and update root
+    if(pAddr == -1)
+    {
+        BTNode newRoot;
+        newRoot.contents[0] = key;
+        newRoot.child[0] = leftAddr;
+        newRoot.child[1] = rightAddr;
+        
+        treeFile.seekg(0,ios::end);
+        treeFile.write((char *) & parent, sizeof(BTNode));
+        rootAddr = treeFile.tellp();
+        write++;
+    }
+    //parent node is not full
+    else if(parent.currSize < 4)
+    {
+        int i;
+        //finding correcting location to insert key to node and adjusting children
+        for(i=parent.currSize-1; (i>=0 && key < parent.contents[i]); i--)
+        {
+            parent.contents[i+1] = parent.contents[i];
+            parent.child[i+2] = parent.child[i+1];
+        }
+        parent.contents[i+1] = key;
+        parent.child[i+2] = rightAddr;
+        parent.currSize++;
+
+        //write back out to file
+        treeFile.seekg(pAddr,ios::beg);
+        treeFile.write((char *) & parent, sizeof(BTNode));
+        write++;
+    }
+    else
+    {
+        splitNode(key, pAddr, leftAddr, rightAddr);
+    }
 }
