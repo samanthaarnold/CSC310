@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
         
     }
     cout<<endl;
-    b.printTree();
+    //b.printTree();
 
     temp.close();
     b.close();
