@@ -23,14 +23,14 @@ struct BTNode
         IndexArray child; 		//links or children
 }; 
 
-struct Pair
-{
-        Album element;
-        int loffset;
-        int roffset;
-        friend bool operator < (const Pair& p1, const Pair& p2)
-           { return (p1.element < p2.element);  }
-};
+// struct Pair
+// {
+//         Album element;
+//         int loffset;
+//         int roffset;
+//         friend bool operator < (const Pair& p1, const Pair& p2)
+//            { return (p1.element < p2.element);  }
+// };
 
 class BTree
 {
@@ -49,7 +49,7 @@ class BTree
 	void totalio() const;
 	int countLeaves();
 
- private:
+ //private:
 	BTNode root;
     int rootAddr;
 	char treeFileName[80];

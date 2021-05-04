@@ -38,7 +38,7 @@ Album & Album::operator = (const Album& otherAlbum)
 //operator overloading for comparing UPC's
 bool operator < (const Album& a, const Album& b)
 {
-    return a.UPC < b.UPC;
+    return a.getUPC() < b.getUPC();
 } 
 
 bool operator == (const Album & a, const Album & b)
@@ -59,13 +59,11 @@ istream & operator >> (istream & stream, Album & C)
 
 ostream & operator << (ostream & stream, Album & C)
 {
-    cout<<C.UPC<<" "<<C.Artist<<" "<<C.Title<<endl;
-    
-    return stream<<C.UPC<<C.Artist<<C.Title; 
+    return stream<<C.UPC<<"|"<<C.Artist<<"|"<<C.Title<<"|"; 
 }
 
 //getter function
-string Album::getUPC ()
+string Album::getUPC() const
 {
     return UPC;
 }

@@ -14,6 +14,7 @@ void BTree:: writeHeader (char * fileName)
     BTNode dummy;
     treeFile.read((char *) & dummy, sizeof(BTNode));
     rootAddr = dummy.child[0];
+    root = getNode(rootAddr);
     read++;
 }
 
@@ -26,37 +27,62 @@ void BTree:: insert (keyType key)
 // key is value inseting, recAddr is addess of current node 
 void BTree:: insert (keyType key, int recAddr)
 {
+    cout << "recAddr = " << recAddr << endl;
     BTNode dummy = getNode(recAddr);
     
     if(!isLeaf(recAddr))
     {
+        cout<<"not leaf"<<endl;
         //recrusively loop through until you get to leaf
-        for(int i=0; i<dummy.currSize; i++)
+        for(int j=0; j<dummy.currSize; j++)
         {
-            if(key<dummy.contents[i])
+            if(key<dummy.contents[j])
             {
-                insert(key,dummy.child[i]);
+                insert(key,dummy.child[j]);
             }
         }
         insert(key,dummy.child[dummy.currSize]);
     }
+    
     //node is a leaf, and node is not full
     else if( isLeaf(recAddr) && dummy.currSize < 4 )
     {
+        cout<<"made it to leaf"<<endl;
+
+        cout << "******" << endl;
+        for(int i = 0; i < dummy.currSize; i++)
+            cout << dummy.contents[i].getUPC() << ' ';
+        cout << endl;
+
+        cout << endl;
+        cout << "Curr size = " << dummy.currSize << endl;
+        cout << key.getUPC() << endl << dummy.contents[dummy.currSize-1].getUPC() << endl;
+        cout << (key < dummy.contents[dummy.currSize-1]) << endl;
+
         int i;
         //finding correcting location to insert key to node
         for(i=dummy.currSize-1; (i>=0 && key < dummy.contents[i]); i--)
         {
+            cout << "i = " << i << endl;
             dummy.contents[i+1] = dummy.contents[i];
         }
+        cout << "done with loop. i = " << i << endl;
         dummy.contents[i+1] = key;
         dummy.currSize++;
-        cout<<"Now inserting "<<key.getUPC()<<endl;
+
+
+        for(i = 0; i < dummy.currSize; i++)
+            cout << dummy.contents[i].getUPC() << ' ';
+        cout << endl;
+        cout << "*********" << endl;
+
+        cout<<"Now inserting "<<key.getUPC()<<" at "<<i+1<<endl;
 
         //write back out to file
         treeFile.seekg(recAddr,ios::beg);
         treeFile.write((char *) & dummy, sizeof(BTNode));
         write++;
+        cout << "done inserting" << endl;
     }
     //node is full, must split
     else
@@ -66,9 +92,25 @@ void BTree:: insert (keyType key, int recAddr)
     }
 }
 
+//makes new b-tree
+//opens file, makes dummy node 
 void BTree:: reset (char * filename)
 {
-   treeFile.seekg(0);
+    treeFile.open(filename, ios::in | ios::out | ios::binary);
+    treeFile.seekg(0, ios::beg);
+    BTNode dummy;
+    dummy.child[0] = sizeof(BTNode);
+    rootAddr = dummy.child[0];
+
+    root.currSize = 0;
+    for(int i=0; i<ORDER; i++)
+    {
+        root.child[i]=-1;
+    }
+    treeFile.write((char *) & dummy, sizeof(BTNode));
+    write++;
+    treeFile.write((char *) & root, sizeof(BTNode));
+    write++;
 }
 
 //closes the fstream treeFile
@@ -243,6 +285,7 @@ BTNode BTree:: getNode(int recAddr)
     treeFile.seekg(recAddr, ios::beg);
     BTNode dummy;
     treeFile.read((char *) & dummy, sizeof(BTNode));
+    read++;
     return dummy;
 }
 
@@ -270,6 +313,7 @@ bool BTree:: isLeaf(BTNode t)
 {
     if(t.child[0] == -1)
         return true;
+ 
     return false;
 }
 

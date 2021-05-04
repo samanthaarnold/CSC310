@@ -21,7 +21,7 @@ class Album
        friend bool operator < (const Album& a, const Album& b);
        friend istream & operator >> (istream & stream, Album & C);
        friend ostream & operator << (ostream & stream, Album & C);
-       string getUPC ();
+       string getUPC () const;
        int recordSize();
 
    private :
