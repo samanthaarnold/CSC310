@@ -49,7 +49,7 @@ class BTree
 	void totalio() const;
 	int countLeaves();
 
- //private:
+private:
 	BTNode root;
     int rootAddr;
 	char treeFileName[80];
@@ -64,16 +64,16 @@ class BTree
 	int findAddr (keyType key, BTNode t, int tAddr);
 	int findpAddr(keyType key, BTNode t, int tAddr, int findAddr);
 	void insert (keyType key, int recAddr);
-        BTNode getNode (int recAddr);
+    BTNode getNode (int recAddr);
 	void printNode(int recAddr);
-        void placeNode (keyType key,int pAddr,int leftAddr,int rightAddr);
+    void placeNode (keyType key,int pAddr,int leftAddr,int rightAddr);
 	bool isLeaf (int recAddr);
 	bool isLeaf(BTNode t);
 	int countLeaves(int recAddr);
-        void adjRoot (keyType rootElem, int oneAddr, int twoAddr);
-        void splitNode (keyType& key,int recAddr, int leftAddr, int rightAddr);
+    void adjRoot (keyType key, int leftAddr, int rightAddr);
+    void splitNode (keyType& key,int recAddr, int leftAddr, int rightAddr);
 	bool search (string key, BTNode t, int tAddr);
-	
+	keyType retrieve (string key, BTNode t, int tAddr);
 };
 
 #endif

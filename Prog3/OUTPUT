@@ -1,0 +1,77 @@
+Now inseting 08722|Counting Crows|This Desert Life|
+Now inseting 75599|U2|All That You Can't Leave Behind|
+Now inseting 42276|Tom Petty|Into the Great Wide Open|
+Now inseting 02284|Kenny Loggins|Footloose|
+Now inseting 20831|Dave Matthews|Everyday|
+Now spliting
+Now adjusting root
+Now inseting 99000|Train|Drops of Jupiter|
+Now inseting 00100|Dido|No Angel|
+Now inseting 00101|Eva Cassidy|Songbird|
+Now inseting 00102|Metallica|Ride the Lightning|
+Now spliting
+Now inseting 00000|Any Song|Any Artist|
+Now inseting 00001|Any Song|Any Artist|
+Now inseting 00002|Any Song|Any Artist|
+Now spliting
+Now inseting 00003|Any Song|Any Artist|
+Now inseting 00004|Any Song|Any Artist|
+Now inseting 00005|Any Song|Any Artist|
+Now spliting
+Now inseting 99999|Any Song|Any Artist|
+Now inseting 99998|Any Song|Any Artist|
+Now spliting
+Now adjusting root
+Now inseting 00006|Any Song|Any Artist|
+Now inseting 00007|Any Song|Any Artist|
+Now inseting 00008|Any Song|Any Artist|
+Now spliting
+Now inseting 00009|Any Song|Any Artist|
+Now inseting 00010|Any Song|Any Artist|
+Now inseting 00011|Any Song|Any Artist|
+Now spliting
+Now inseting 00012|Any Song|Any Artist|
+Now inseting 00013|Any Song|Any Artist|
+Now inseting 00014|Any Song|Any Artist|
+Now spliting
+
+-------- B-tree of height 2 --------
+ *** node of size 2 *** 
+00008|Any Song|Any Artist|
+00102|Metallica|Ride the Lightning|
+ *** node of size 2 *** 
+00002|Any Song|Any Artist|
+00005|Any Song|Any Artist|
+ *** node of size 2 *** 
+00000|Any Song|Any Artist|
+00001|Any Song|Any Artist|
+ *** node of size 2 *** 
+00003|Any Song|Any Artist|
+00004|Any Song|Any Artist|
+ *** node of size 2 *** 
+00006|Any Song|Any Artist|
+00007|Any Song|Any Artist|
+ *** node of size 2 *** 
+00011|Any Song|Any Artist|
+00014|Any Song|Any Artist|
+ *** node of size 2 *** 
+00009|Any Song|Any Artist|
+00010|Any Song|Any Artist|
+ *** node of size 2 *** 
+00012|Any Song|Any Artist|
+00013|Any Song|Any Artist|
+ *** node of size 2 *** 
+00100|Dido|No Angel|
+00101|Eva Cassidy|Songbird|
+ *** node of size 2 *** 
+20831|Dave Matthews|Everyday|
+99000|Train|Drops of Jupiter|
+ *** node of size 2 *** 
+02284|Kenny Loggins|Footloose|
+08722|Counting Crows|This Desert Life|
+ *** node of size 2 *** 
+42276|Tom Petty|Into the Great Wide Open|
+75599|U2|All That You Can't Leave Behind|
+ *** node of size 2 *** 
+99998|Any Song|Any Artist|
+99999|Any Song|Any Artist|

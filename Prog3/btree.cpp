@@ -9,10 +9,11 @@ BTree:: BTree()
 //prints to screen at the beginning of the program
 void BTree:: writeHeader (char * fileName)
 {
-    treeFile.open(fileName, ios::in |ios::out);
+    treeFile.open(fileName, ios::in |ios::out | ios::binary);
     treeFile.seekg(0, ios::beg);
     BTNode dummy;
     treeFile.read((char *) & dummy, sizeof(BTNode));
+    cout << dummy.child[0] << endl;
     rootAddr = dummy.child[0];
     root = getNode(rootAddr);
     read++;
@@ -27,69 +28,47 @@ void BTree:: insert (keyType key)
 // key is value inseting, recAddr is addess of current node 
 void BTree:: insert (keyType key, int recAddr)
 {
-    cout << "recAddr = " << recAddr << endl;
     BTNode dummy = getNode(recAddr);
     
+    //check if you are at a leaf
     if(!isLeaf(recAddr))
     {
-        cout<<"not leaf"<<endl;
         //recrusively loop through until you get to leaf
         for(int j=0; j<dummy.currSize; j++)
         {
-            if(key<dummy.contents[j])
-            {
+            if(key<dummy.contents[j]) {
                 insert(key,dummy.child[j]);
+                return;
             }
         }
         insert(key,dummy.child[dummy.currSize]);
+        return;
     }
-    
-    cout<<"CURRENT SIZE: "<<dummy.currSize<<endl;
     //node is a leaf, and node is not full
     else if( isLeaf(recAddr) && dummy.currSize < 4 )
     {
-        // cout<<"made it to leaf"<<endl;
-
-        // cout << "******" << endl;
-        // for(int i = 0; i < dummy.currSize; i++)
-        //     cout << dummy.contents[i].getUPC() << ' ';
-        // cout << endl;
-
-        // cout << endl;
-        // cout << "Curr size = " << dummy.currSize << endl;
-        // cout << key.getUPC() << endl << dummy.contents[dummy.currSize-1].getUPC() << endl;
-        // cout << (key < dummy.contents[dummy.currSize-1]) << endl;
-
         int i;
         //finding correcting location to insert key to node
         for(i=dummy.currSize-1; (i>=0 && key < dummy.contents[i]); i--)
         {
-            //cout << "i = " << i << endl;
             dummy.contents[i+1] = dummy.contents[i];
         }
-        //cout << "done with loop. i = " << i << endl;
         dummy.contents[i+1] = key;
         dummy.currSize++;
 
-
-        for(int j = 0; j < dummy.currSize; j++)
-            cout << dummy.contents[j].getUPC() << ' ';
-        cout << endl;
-        cout << "*********" << endl;
-
-        cout<<"Now inserting "<<key.getUPC()<<" at "<<_IO_UNIFIED_JUMPTABLES+1<<endl;
-
-        //write back out to file
+        //updating leaf in index file
         treeFile.seekg(recAddr,ios::beg);
         treeFile.write((char *) & dummy, sizeof(BTNode));
         write++;
-        cout << "done inserting" << endl;
+
+        if(recAddr == rootAddr)
+            root = dummy;
     }
     //node is full, must split
     else
     {
-        splitNode(key, recAddr, -1, -1);
-        cout<<"Now splitting "<<endl;
+        cout << "Now spliting" << endl; 
+        splitNode(key, recAddr, -1, -1); 
     }
 }
 
@@ -97,17 +76,20 @@ void BTree:: insert (keyType key, int recAddr)
 //opens file, makes dummy node 
 void BTree:: reset (char * filename)
 {
-    treeFile.open(filename, ios::in | ios::out | ios::binary);
+    //ios::trunc clears file every time so don't have a huge file
+    treeFile.open(filename, ios::trunc | ios::in | ios::out | ios::binary);
+    //setting first node (that contains no data) with the root address
     treeFile.seekg(0, ios::beg);
     BTNode dummy;
     dummy.child[0] = sizeof(BTNode);
     rootAddr = dummy.child[0];
 
+    //setting children of root to -1
     root.currSize = 0;
     for(int i=0; i<ORDER; i++)
-    {
         root.child[i]=-1;
-    }
+
+    //updating index file at first node and root node
     treeFile.write((char *) & dummy, sizeof(BTNode));
     write++;
     treeFile.write((char *) & root, sizeof(BTNode));
@@ -147,13 +129,14 @@ void BTree:: inorder()
 //prints in accending order
 void BTree:: inorder (int rootAddr)
 {
+    if(rootAddr == -1)
+        return;
+
     BTNode dummy = getNode(rootAddr);
-    for(int i=0; i<=dummy.currSize; i++)
+    for(int i=0; i<dummy.currSize; i++)
     {
-        //checks to see if node is a leaf, if it is a leaf, recursively goes through
-        //tree untill it gets to leaf, and prints all children
-        if(dummy.child[i] != -1)
-            inorder(dummy.child[i]);
+        //recursively goes through tree untill it gets to leaf, and prints all children
+        inorder(dummy.child[i]);
         cout<<dummy.contents[i]<<endl;
     }
     inorder(dummy.child[dummy.currSize]);
@@ -185,6 +168,38 @@ int BTree:: getHeight()
     return height;
 }
 
+
+keyType BTree:: retrieve (string key)
+{
+    return retrieve (key, root, rootAddr);
+}
+
+keyType BTree:: retrieve (string key, BTNode t, int tAddr)
+{
+    for(int i=0; i<t.currSize; i++)
+    {
+        if(key == t.contents[i].getUPC())
+        {
+            return t.contents[i];
+        }
+    }
+    for(int i=0; i<t.currSize; i++) 
+    {
+        if(key < t.contents[i].getUPC() && !isLeaf(t))
+        {
+            return retrieve(key, getNode(t.child[i]), t.child[i]);
+        }
+    }
+    if( isLeaf(t) )
+    {
+        return keyType();
+    }
+    else
+    {
+        return retrieve(key, getNode(t.child[t.currSize]), t.child[t.currSize]);
+    }
+}
+
 bool BTree:: search (string key)
 {
     return search(key, root, rootAddr);
@@ -196,29 +211,32 @@ bool BTree:: search (string key, BTNode t, int tAddr)
     for(int i=0; i<t.currSize; i++)
     {
         if(key == t.contents[i].getUPC())
+        {
             return true;
-
-        else if(key < t.contents[i].getUPC() && !isLeaf(t))
-            return search(key, t, tAddr);
+        }
     }
-    if(isLeaf(t))
+    for(int i=0; i<t.currSize; i++) 
+    {
+        if(key < t.contents[i].getUPC() && !isLeaf(t))
+        {
+            return search(key, getNode(t.child[i]), t.child[i]);
+        }
+    }
+    if( isLeaf(t) )
+    {
         return false;
+    }
     else
-        return search(key, t, tAddr);
+    {
+        return search(key, getNode(t.child[t.currSize]), t.child[t.currSize]);
+    }
 }
-
-/*	
-keyType BTree:: retrieve (string key)
-{
-
-}
-*/
 
 //totals the amount of times gone out to disk
 void BTree:: totalio() const
 {
-    cout<<"total read: "<<read<<endl;
-    cout<<"total write: "<<write<<endl;
+    cout<<"\tTotal Reads: "<<read<<endl;
+    cout<<"\tTotal writes: "<<write<<endl;
 }
 
 int BTree:: countLeaves()
@@ -241,43 +259,38 @@ int BTree:: countLeaves(int recAddr)
     return numLeaves;
 }
 
-//private
-int BTree:: findAddr (keyType key, BTNode t, int tAddr)
-{
-    for(int i=0; i<t.currSize; i++)
-    {
-        if(key == t.contents[i])
-            return tAddr;
-
-        else if(key < t.contents[i] && !isLeaf(t))
-            return findAddr(key, getNode(t.child[i]), t.child[i]);
-    }
-    if(isLeaf(t))
-        return tAddr;
-    else
-        return findAddr(key, getNode(t.child[t.currSize]), t.child[t.currSize]);
-
-}
-
 //private function 
 //tAddr is adress of current position, findAddr is the address of the parent (what you want)
 int BTree:: findpAddr(keyType key, BTNode t, int tAddr, int findAddr)
-{
-    for(int i=0; i<t.currSize; i++)
+{ 
+    if(tAddr != -1) 
     {
-        if(findAddr == t.child[i])
-            return tAddr;
-
-        else if(key < t.contents[i] && !isLeaf(t))
-            findpAddr(key, t, tAddr, findAddr);
+        if(findAddr == rootAddr)
+            return -1;
+            
+        for(int i=0; i<=t.currSize; i++) 
+        {
+            if(findAddr == t.child[i]) 
+                return tAddr;
+        }
+        for(int i=0; i<t.currSize; i++) 
+        {
+            if(key < t.contents[i]) 
+            {
+                if(t.child[i] != -1) 
+                    return findpAddr(key, getNode(t.child[i]), t.child[i], findAddr);
+                else
+                    return -1;
+            }
+        }
+        //checking rightmost child
+        if(isLeaf(t))
+            return -1;
+        else
+            return findpAddr(key, getNode(t.child[t.currSize]), t.child[t.currSize], findAddr); 
+    
     }
-    //checking rightmost child
-    if(isLeaf(t))
-        return -1;
-    else if(findAddr == t.child[t.currSize])
-        return tAddr;
-    else
-        return findpAddr(key, t, tAddr, findAddr);
+    return -1;
 }
 
 //private
@@ -318,136 +331,112 @@ bool BTree:: isLeaf(BTNode t)
     return false;
 }
 
-//private
-void BTree:: adjRoot (keyType rootElem, int oneAddr, int twoAddr)
-{
-
-}
-
 //private function. When first called, you are at a leaf node  
 void BTree:: splitNode (keyType& key,int recAddr, int leftAddr, int rightAddr)
 {
     BTNode leftChild = getNode(recAddr);
     BTNode parent = getNode(findpAddr(key, root, rootAddr, recAddr));
-    cout<<"key in split: "<<key.getUPC()<<endl;
-    
-    //Case 1: leaf is full, and parent is not full
-    if(parent.currSize < 4)
+
+    if(key < leftChild.contents[3])
     {
-        if(key < leftChild.contents[3])
+        keyType temp = leftChild.contents[3];
+        leftChild.contents[3] = key;
+        key = temp;
+        int tempAddr = leftChild.child[4];
+        leftChild.child[4] = rightAddr;
+        rightAddr = tempAddr;
+       
+        int i;
+        //finding correcting location to insert key to node
+        for(i=leftChild.currSize-1; (i>0 && leftChild.contents[i]<leftChild.contents[i-1]); i--)
         {
-            keyType temp = leftChild.contents[3];
-            leftChild.contents[3] = key;
-            key = temp;
-            int tempAddr = leftChild.child[4];
-            leftChild.child[4] = rightAddr;
-            rightAddr = tempAddr;
+            temp = leftChild.contents[i];
+            leftChild.contents[i] = leftChild.contents[i-1];
+            leftChild.contents[i-1] = temp;
 
-            int i;
-            //finding correcting location to insert key to node
-            for(i=leftChild.currSize-1; (i>=0 && key < leftChild.contents[i]); i--)
-            {
-                leftChild.contents[i+1] = leftChild.contents[i];
-                //leftChild.contents[i+2] = leftChild.contents[i+1];
-            }
-            
-            cout<<"************************"<<endl;
-            for(i=0; i< leftChild.currSize; i++)
-            {
-                cout<<leftChild.contents[i]<<" ";
-            }      
-            cout<<endl;  
-        
-        
-            //splitting leftchild contents
-            leftChild.currSize = 2;
-
-            //adding content to right child, and updating the children 
-            cout<<"KEY IN POSITION 4: "<<key.getUPC()<<endl;
-            BTNode rightChild;
-            rightChild.currSize=2;
-            rightChild.contents[0] = leftChild.contents[3];
-            rightChild.contents[1] = key;
-
-            rightChild.child[0] = leftChild.child[3];
-            rightChild.child[1] = leftChild.child[4];
-            rightChild.child[2] = rightAddr;
-
-            key=leftChild.contents[2];
-
-            treeFile.seekp(recAddr, ios::beg);
-            treeFile.write((char *) & leftChild, sizeof(BTNode));
-            write++;
-
-            treeFile.seekp(0,ios::end);
-            int rightAddress = treeFile.tellp();
-            treeFile.write((char *) & rightChild, sizeof(BTNode));
-            write++;
-            
-            cout<<"parent: ";
-            int i;
-            for(i = 0; i < parent.currSize; i++)
-                cout << parent.contents[i].getUPC() << ' ';
-            cout << endl;
-            cout << "*********" << endl;
-            cout<<endl;
-            cout<<"left child: ";
-            for(i = 0; i < leftChild.currSize; i++)
-                cout << leftChild.contents[i].getUPC() << ' ';
-            cout<<endl;
-            cout << "*********" << endl;
-            cout<<endl;
-            cout<<"right child: ";
-            for(i = 0; i < rightChild.currSize; i++)
-                cout << rightChild.contents[i].getUPC() << ' ';
-            cout<<endl;
-            cout << "*********" << endl;
-            cout<<"key: "<<key.getUPC()<<endl;
-        
-            //promoting child in position 2 to parent
-            placeNode(leftChild.contents[0], findpAddr(key, root, rootAddr, recAddr), recAddr, rightAddress);
-
-        }
+            tempAddr = leftChild.child[i+1];
+            leftChild.child[i+1] = leftChild.child[i];
+            leftChild.child[i] = tempAddr;
+        }            
     }
+        //splitting leftchild contents
+        leftChild.currSize = 2;
+
+        //adding content to right child, and updating the children 
+        BTNode rightChild;
+        rightChild.currSize=2;
+        rightChild.contents[0] = leftChild.contents[3];
+        rightChild.contents[1] = key;
+
+        rightChild.child[0] = leftChild.child[3];
+        rightChild.child[1] = leftChild.child[4];
+        rightChild.child[2] = rightAddr;
+        rightChild.child[3] = -1;
+        rightChild.child[4] = -1;
+
+        key=leftChild.contents[2];
+
+        treeFile.clear();
+        treeFile.seekp(recAddr, ios::beg);
+        treeFile.write((char *) & leftChild, sizeof(BTNode));
+        write++;
+
+        treeFile.clear();
+        treeFile.seekp(0,ios::end);
+        int rightAddress = treeFile.tellp();
+        treeFile.write((char *) & rightChild, sizeof(BTNode));
+        write++;
+    
+        //promoting child in position 2 to parent
+        placeNode(key, findpAddr(key, root, rootAddr, recAddr), recAddr, rightAddress);
+    
 }
 
 //promote median value to parent node
 void BTree:: placeNode (keyType key,int pAddr,int leftAddr,int rightAddr)
 {
-    cout<<"now promoting"<<endl;
     BTNode parent = getNode(pAddr);
     BTNode left = getNode(leftAddr);
     BTNode right = getNode(rightAddr);
     
-
-    cout<<"key before: "<<key.getUPC()<<endl;
-    //case if root is full, need to create new node and update root
+    //adjusting root
     if(pAddr == -1)
     {
-        height++;
-        cout<<"new root"<<endl;
+        cout << "Now adjusting root" << endl;
+        height++; 
+        
+        //promoting key to new node
         BTNode newRoot;
-        cout<<"key in parent "<<key.getUPC()<<endl;
         newRoot.contents[0] = key;
-        newRoot.currSize++;
+        newRoot.currSize = 1;
+        //setting left and right links as its children
         newRoot.child[0] = leftAddr;
         newRoot.child[1] = rightAddr;
-        
+        newRoot.child[2] = -1;
+        newRoot.child[3] = -1;
+        newRoot.child[4] = -1;
+
+        //setting temparay root to BTNode root
+        root = newRoot;
+        root.currSize = 1;
+        //writing new root node at the end of index file
+        treeFile.clear();
         treeFile.seekg(0,ios::end);
-        treeFile.write((char *) & parent, sizeof(BTNode));
         rootAddr = treeFile.tellp();
+        treeFile.write((char *) & newRoot, sizeof(BTNode));
         write++;
 
-        cout << "*********" << endl;
-        for(int i = 0; i < newRoot.currSize; i++)
-            cout << newRoot.contents[i].getUPC() << ' ';
-        cout << endl;
-
+        //updating child[0] at beginging of file with new root address
+        treeFile.clear();
+        treeFile.seekg(0, ios::beg);
+        BTNode dummy;
+        dummy.child[0] = rootAddr;
+        treeFile.write((char *) & dummy, sizeof(BTNode));
+        write++;
     }
     //parent node is not full
     else if(parent.currSize < 4)
     {
-        cout<<"promoting "<<key.getUPC()<<" to parent"<<endl;
         int i;
         //finding correcting location to insert key to node and adjusting children
         for(i=parent.currSize-1; (i>=0 && key < parent.contents[i]); i--)
@@ -457,26 +446,23 @@ void BTree:: placeNode (keyType key,int pAddr,int leftAddr,int rightAddr)
         }
         parent.contents[i+1] = key;
         parent.child[i+2] = rightAddr;
+        //updating size
         parent.currSize++;
 
-        cout << "*********" << endl;
-
-        cout<<"parent: ";
-        for(i = 0; i < parent.currSize; i++)
-            cout << parent.contents[i].getUPC() << ' ';
-        cout << endl;
-        cout << "*********" << endl;
-
-        //write back out to file
+        //updating index file with key
         treeFile.seekg(pAddr,ios::beg);
         treeFile.write((char *) & parent, sizeof(BTNode));
         write++;
+
+        //special case for if we are updating the root
+        if(pAddr == rootAddr)
+        {
+            root = parent;
+        }      
     }
+    //if parent node is full, split again 
     else
     {
-        cout<<"spliting again parent is full"<<endl;
         splitNode(key, pAddr, leftAddr, rightAddr);
     }
-
-    cout<<"end of promoting"<<endl;
 }

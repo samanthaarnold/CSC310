@@ -12,20 +12,18 @@ int main(int argc, char* argv[])
 
     b.reset(argv[2]);
 
-    //cout << b.root.currSize << endl;
-
     fstream temp(argv[1],ios::in);
 
     while( temp >> a )
     {
-        
-        cout<<a;
-        cout<<endl;
+        cout<<"Now inseting "<<a<<endl;
         b.insert(a);
-        
     }
+    
     cout<<endl;
-    //b.printTree();
+    b.printTree();
+    // cout << "***********************************************************" << endl;
+    //b.inorder();
 
     temp.close();
     b.close();
